@@ -1,0 +1,54 @@
+================================================================================
+NEURAL NETWORK MODEL EVALUATION REPORT
+================================================================================
+Model: best_model.pt
+Target Horizon: 1y
+Generated: 2025-10-09 11:03:45
+
+OVERALL PERFORMANCE
+--------------------------------------------------------------------------------
+  Samples:                    295
+  Mean Absolute Error (MAE):  0.2305 (23.05%)
+  Root Mean Squared Error:    0.3690 (36.90%)
+  R-squared:                  -0.0109
+  Correlation:                0.4421
+  Hit Rate (direction):       78.64%
+  95% CI Coverage:            80.34% (expected 95%)
+
+PERFORMANCE BY DECADE
+--------------------------------------------------------------------------------
+  2020s:
+    MAE:         0.2305 (23.05%)
+    RMSE:        0.3690
+    Correlation: 0.4421
+    Hit Rate:    78.64%
+    Samples:     295
+
+PERFORMANCE BY SECTOR
+--------------------------------------------------------------------------------
+  Real Estate              : MAE=0.0583, Corr=0.869, Hit=66.67%, n=3
+  Consumer Defensive       : MAE=0.1158, Corr=0.675, Hit=80.95%, n=21
+  Utilities                : MAE=0.1165, Corr=-0.165, Hit=44.44%, n=9
+  Financial Services       : MAE=0.1588, Corr=0.048, Hit=90.38%, n=52
+  Healthcare               : MAE=0.1853, Corr=0.373, Hit=66.67%, n=63
+  Energy                   : MAE=0.2086, Corr=0.092, Hit=55.56%, n=9
+  Industrials              : MAE=0.2265, Corr=-0.084, Hit=75.00%, n=36
+  Basic Materials          : MAE=0.2346, Corr=-0.457, Hit=100.00%, n=3
+  Consumer Cyclical        : MAE=0.2603, Corr=0.352, Hit=82.61%, n=23
+  Technology               : MAE=0.3536, Corr=0.459, Hit=93.22%, n=59
+  Communication Services   : MAE=0.4024, Corr=0.434, Hit=64.71%, n=17
+
+TOP 10 WORST PREDICTIONS
+--------------------------------------------------------------------------------
+  NVDA   Technology           2023-01-10   | Pred: +36.24%, Actual: +244.75%, Error: -208.51%
+  META   Communication Services 2022-11-22   | Pred: +8.68%, Actual: +203.51%, Error: -194.83%
+  NVDA   Technology           2022-07-12   | Pred: +36.70%, Actual: +205.10%, Error: -168.40%
+  NVDA   Technology           2023-07-13   | Pred: +32.04%, Actual: +179.44%, Error: -147.40%
+  NFLX   Communication Services 2022-07-12   | Pred: +17.13%, Actual: +158.17%, Error: -141.04%
+  GE     Industrials          2022-07-12   | Pred: +3.74%, Actual: +127.07%, Error: -123.33%
+  LLY    Healthcare           2023-07-13   | Pred: +13.32%, Actual: +120.28%, Error: -106.96%
+  AVGO   Technology           2023-02-10   | Pred: +11.40%, Actual: +115.78%, Error: -104.38%
+  MU     Technology           2023-07-13   | Pred: +10.99%, Actual: +103.79%, Error: -92.80%
+  CRM    Technology           2022-12-28   | Pred: +14.20%, Actual: +104.83%, Error: -90.63%
+
+================================================================================

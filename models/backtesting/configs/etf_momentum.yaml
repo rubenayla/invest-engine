@@ -1,0 +1,72 @@
+# ETF Momentum Strategy Backtest Configuration
+name: etf_momentum_backtest
+
+# Backtest period (shorter for momentum testing)
+start_date: '2021-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency
+rebalance_frequency: monthly  # Monthly for momentum
+
+# Strategy type
+strategy_type: etf_portfolio
+
+# ETF universe - Focus on liquid sector and style ETFs
+universe:
+  # Sectors (for rotation)
+  - XLK   # Technology
+  - XLF   # Financials
+  - XLV   # Healthcare
+  - XLE   # Energy
+  - XLI   # Industrials
+  - XLY   # Consumer Discretionary
+  - XLP   # Consumer Staples
+  - XLU   # Utilities
+  - XLRE  # Real Estate
+  - XLB   # Materials
+  - XLC   # Communication Services
+  
+  # Styles
+  - QQQ   # Growth/Tech
+  - IWF   # Large Growth
+  - IWD   # Large Value
+  - IWM   # Small Cap
+  - MDY   # Mid Cap
+  
+  # International
+  - EFA   # Developed International
+  - EEM   # Emerging Markets
+  
+  # Alternatives
+  - GLD   # Gold
+  - TLT   # Long Bonds
+  - VNQ   # Real Estate
+
+# Portfolio constraints
+max_positions: 5  # Concentrated momentum portfolio
+min_position_size: 0.15
+max_position_size: 0.25
+
+# Transaction costs
+transaction_cost: 0.001  # Higher due to more frequent trading
+slippage: 0.001
+
+# Benchmark
+benchmark: SPY
+
+# Momentum Strategy Configuration
+strategy:
+  # Momentum-based sector rotation
+  strategy_type: momentum
+  
+  # Top N momentum ETFs
+  max_positions: 5
+  
+  # Rebalancing threshold
+  rebalance_threshold: 0.10  # Higher threshold for momentum
+  
+  # Expense ratio limit
+  expense_ratio_limit: 0.02  # Allow slightly higher for specialty ETFs

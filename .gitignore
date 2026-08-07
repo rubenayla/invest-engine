@@ -1,0 +1,172 @@
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+*.zip
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.so
+
+# Generated analysis results (organized in folder)
+analysis_results/
+*_screen_*_report.txt
+*_screen_*_results.csv
+*_screen_*_data.json
+*_analysis_*_report.txt
+*_analysis_*_results.csv
+default_analysis_*.txt
+default_analysis_*.csv
+
+# Coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Backtesting reports (generated)
+models/backtesting/reports/*.csv
+models/backtesting/reports/*.html
+
+# MkDocs build output
+site/
+
+# IDE files (common ones)
+.vscode/
+.idea/
+.DS_Store
+.gemini-clipboard/
+
+# Personal/temporary configs
+# my_*.yaml
+# temp_*.yaml
+
+# Dashboard backups
+dashboard/backups/
+
+# Pytest cache
+.pytest_cache/
+
+# Temporary debug/analysis files (but not actual tests/)
+debug_*.py
+analyze_*.py
+demo_*.py
+fix_*.py
+inspect_*.py
+investigate_*.py
+explore_*.py
+explain_*.py
+ensemble_selection_explained.py
+*.py.backup
+
+# Temporary test files (but not in tests/ directory)
+test_*.py
+!tests/test_*.py
+
+# Temporary cache directories
+.cache/
+
+# Dashboard backup files
+dashboard/dashboard_data_backup.json
+
+# Dashboard reports and temporary files
+dashboard_*.txt
+dashboard_*_report.txt
+data_fetch_summary_*.json
+offline_analysis_results_*.json
+analysis_summary_*.json
+empty_tickers.txt
+train_*.log
+
+# Temporary script files
+scripts/regenerate_dashboard.py
+start_dashboard_properly.py
+verify_dashboard.py
+
+# Stock cache data (too large for git)
+data/stock_cache/
+
+# Generated index and dashboard data files  
+data/indices/companies_registry.json
+data/indices/indices_cache.json
+dashboard/dashboard_data.json
+dashboard/valuation_dashboard.html
+dashboard/analysis_summary_*.json
+
+# Additional generated files
+watchlist_analysis.csv
+# Training logs and results (now in neural_network/)
+comprehensive_training.log
+local_training.log
+training_run.log
+models/neural_network/training/training_data_cache.json
+
+# Neural network training artifacts
+*_training.log
+*_collection.log
+collection_*.log
+arch_*.log
+cache_*.log
+incremental_*.log
+data_collection_*.log
+comprehensive_training_results_*.json
+models/neural_network/training/*_backup.json
+models/neural_network/training/*_old.json
+models/neural_network/training/cache_generation.log
+models/neural_network/training/multi_horizon_training.log
+
+# Multi-horizon training artifacts
+models/neural_network/training/training_*.log
+models/neural_network/training/multi_horizon_training_*.log
+models/neural_network/training/training_data_cache_multi_horizon.json
+models/neural_network/training/cache_backup_*.json
+models/neural_network/training/backups/
+models/neural_network/training/verify_cache_features.py
+src/invest/valuation/multi_horizon_nn.py
+tests/test_multi_horizon_demo.py
+scripts/demo_multi_horizon_predictions.py
+
+# Old artifacts directory
+old_artifacts/
+
+# Neural network models directory (trained models)
+models/neural_network/invest_training_package/
+models/neural_network/*.tar.gz
+
+# SQLite databases and backups
+*.db
+*.db.backup
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Generated dashboards
+dashboard/multi_horizon_predictions.html
+
+# Logs directory (all log files)
+logs/
+data/stock_cache/*.json
+# Training logs
+*.log
+fetch_log*.txt
+# UV local cache for CI/CD
+.uv/
+
+# SEC EDGAR downloaded data (large files)
+data/sec_edgar/raw/
+tmp.md
+backups/
+.agents/scratch.md
+models/autoresearch/catboost_info/
+models/autoresearch/run.log
+catboost_info/
+run.log
+
+# Playwright MCP output (now redirected to /tmp/playwright-mcp; guard in case of cwd-relative fallback)
+.playwright-mcp/

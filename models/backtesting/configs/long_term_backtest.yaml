@@ -1,0 +1,89 @@
+# Long-term backtest configuration (2010-2024)
+# Tests strategy across multiple market cycles including:
+# - Post-2008 recovery (2010-2012)
+# - Bull market expansion (2013-2019)
+# - COVID volatility (2020-2022)
+# - Recent market conditions (2023-2024)
+
+name: long_term_strategy_test
+
+# 15-year test period covering multiple market cycles
+start_date: '2010-01-01'
+end_date: '2024-12-31'
+
+# Substantial initial capital for realistic testing
+initial_capital: 100000
+
+# Quarterly rebalancing for balanced approach
+# (not too frequent to rack up costs, not too infrequent to miss opportunities)
+rebalance_frequency: quarterly
+
+# Diversified large-cap universe for stable long-term testing
+# Mix of growth, value, and defensive stocks across sectors
+universe:
+  # Technology
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - ORCL
+  - ADBE
+  # Healthcare
+  - JNJ
+  - PFE
+  - UNH
+  - ABBV
+  # Financials
+  - JPM
+  - BAC
+  - WFC
+  - BRK-B
+  # Consumer
+  - PG
+  - KO
+  - WMT
+  - HD
+  - MCD
+  # Industrials
+  - BA
+  - CAT
+  - GE
+  # Energy
+  - XOM
+  - CVX
+  # Materials
+  - LIN
+  - SHW
+  # Utilities
+  - NEE
+  - SO
+  # ETFs for additional diversification
+  - SPY   # S&P 500
+  - QQQ   # NASDAQ 100
+  - VTI   # Total Stock Market
+  - VEA   # International Developed
+  - VWO   # Emerging Markets
+
+# Portfolio constraints for risk management
+max_positions: 15              # Allow good diversification
+min_position_size: 0.03       # Minimum 3% position (prevents over-diversification)
+max_position_size: 0.15       # Maximum 15% position (prevents concentration risk)
+
+# Realistic transaction costs for long-term investor
+transaction_cost: 0.0005      # 0.05% - modern brokerage costs
+slippage: 0.0005              # 0.05% - market impact for retail sizes
+
+# Benchmark comparison
+benchmark: SPY
+
+# Strategy configuration - balanced approach
+strategy:
+  quality_weight: 0.35        # Emphasize quality companies
+  value_weight: 0.30          # Look for reasonable valuations
+  growth_weight: 0.25         # Include growth component
+  risk_weight: 0.10           # Risk management (inverted - lower risk = higher score)
+  min_score: 0.45             # Moderate threshold for inclusion
+
+# Note: Advanced settings like cash_buffer, rebalance_threshold, 
+# max_drawdown_limit would require extending the BacktestConfig class

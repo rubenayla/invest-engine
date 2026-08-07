@@ -1,0 +1,77 @@
+description: Compare stocks from US, Japan, and Europe without universe restrictions
+name: mixed_international_analysis
+generate_reports: true
+save_data: true
+max_results: 30
+sort_by: composite_score
+
+# Just list tickers - no universe needed!
+# Format options:
+#   - Simple: AAPL (US stocks)
+#   - With suffix: 7203.T (Toyota Japan), ASML.AS (ASML Amsterdam)
+#   - With exchange: AAPL:NASDAQ, 7203:TSE
+tickers:
+  # US Tech Giants
+  - AAPL      # Apple
+  - MSFT      # Microsoft
+  - GOOGL     # Google
+  
+  # Japanese Giants
+  - 7203.T    # Toyota
+  - 6758.T    # Sony
+  - 8058.T    # Mitsubishi Corp
+  - 8002.T    # Marubeni
+  
+  # European Champions
+  - ASML.AS   # ASML (Netherlands)
+  - NESN.SW   # Nestle (Switzerland)
+  - SAP.DE    # SAP (Germany)
+  - MC.PA     # LVMH (France)
+  
+  # Your watchlist favorites
+  - ACGL      # US Insurance
+  - NEM       # US Gold
+  - BIDU      # Chinese tech (ADR)
+  
+# Remove universe requirement - analyze all together
+universe:
+  region: ALL  # Accept stocks from anywhere
+  custom_tickers: null  # Will be populated from tickers list above
+
+valuation:
+  models:
+    - dcf
+    - rim
+  dcf_years: 10
+  rim_years: 10
+  terminal_growth_rate: 0.025
+  required_return: 0.10
+  risk_free_rate: 0.045
+  scenarios:
+    - base
+
+value:
+  max_pe: 30
+  max_pb: 5
+  max_ev_ebitda: 20
+  max_ev_ebit: 15
+  max_p_fcf: 25
+
+quality:
+  min_roe: 0.08
+  min_roic: 0.06
+  min_current_ratio: 1.0
+  max_debt_equity: 1.5
+  min_interest_coverage: 2.0
+
+growth:
+  min_revenue_growth: 0.00  # Allow any growth
+  min_earnings_growth: 0.00
+  min_fcf_growth: -0.10  # Allow some decline
+  min_book_value_growth: 0.00
+
+risk:
+  max_beta: 2.5
+  min_liquidity_ratio: 0.7
+  max_concentration_risk: 0.6
+  cyclical_adjustment: false

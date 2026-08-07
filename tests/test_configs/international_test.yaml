@@ -1,0 +1,55 @@
+# International market test configuration
+name: "international_test"
+description: "Configuration for testing international market functionality"
+
+universe:
+  name: "Japan Test Universe"
+  market: "japan_topix30"
+  filters:
+    min_market_cap_b: 5.0
+    max_market_cap_b: null
+    exclude_sectors: []
+    include_sectors: []
+
+screening:
+  # Adjusted criteria for Japanese market characteristics
+  quality:
+    min_roe: 0.08            # Lower for Japanese companies
+    min_roic: 0.06
+    max_debt_equity: 1.5     # More tolerant of debt
+    min_current_ratio: 1.0
+    weight: 0.30
+
+  value:
+    max_pe_ratio: 25.0       # Japanese stocks often trade at lower multiples
+    max_pb_ratio: 3.0
+    max_ev_ebitda: 18.0
+    weight: 0.35             # Higher weight on value
+
+  growth:
+    min_revenue_growth: 0.02  # Lower growth expectations for Japan
+    min_earnings_growth: 0.01
+    weight: 0.20             # Lower weight on growth
+
+  risk:
+    max_beta: 1.6
+    max_debt_service_ratio: 0.4
+    weight: 0.15
+
+valuation:
+  dcf:
+    enabled: true
+    growth_rate: 0.03        # Conservative growth for Japan
+    discount_rate: 0.09      # Lower discount rate
+    terminal_multiple: 12.0   # Conservative terminal multiple
+
+output:
+  formats: ["txt", "csv", "json"]
+  top_n: 15
+  include_all_stocks: true
+
+# Japanese market context
+market_context:
+  currency: "JPY"
+  exchange: "Tokyo Stock Exchange"
+  timezone: "Asia/Tokyo"

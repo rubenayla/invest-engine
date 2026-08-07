@@ -1,0 +1,10 @@
+initial_capital,final_value,total_return,annualized_return,sharpe_ratio,max_drawdown,win_rate,number_of_trades,portfolio_turnover
+10000,"Ticker
+AAPL    NaN
+GOOGL   NaN
+MSFT    NaN
+Name: 2023-12-29 00:00:00, dtype: float64","Ticker
+AAPL    NaN
+GOOGL   NaN
+MSFT    NaN
+Name: 2023-12-29 00:00:00, dtype: float64",30.759325879600752,0.2279472961425331,-1.8855103620252434,66.66666666666666,12,0.31458409079155153

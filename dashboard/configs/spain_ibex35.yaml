@@ -1,0 +1,90 @@
+# IBEX 35 - Spanish Blue Chip Stocks
+# Market: Madrid Stock Exchange
+# Currency: EUR
+# Last updated: 2025-01-02
+
+name: "spain_ibex35_screen"
+description: "IBEX 35 index components - Spain's benchmark stock market index"
+
+universe:
+  region: "EU"
+  min_market_cap: 1000  # $1B minimum (USD millions)
+  custom_tickers:
+    # Banking & Financial Services
+    - 'SAN.MC'    # Banco Santander
+    - 'BBVA.MC'   # Banco Bilbao Vizcaya Argentaria
+    - 'CABK.MC'   # CaixaBank
+    - 'SAB.MC'    # Banco Sabadell
+    - 'BKT.MC'    # Bankinter
+    - 'MAP.MC'    # Mapfre
+
+    # Utilities & Energy
+    - 'IBE.MC'    # Iberdrola
+    - 'ELE.MC'    # Endesa
+    - 'ENG.MC'    # Enagás
+    - 'RED.MC'    # Red Eléctrica
+    - 'REE.MC'    # Red Eléctrica (alternative ticker)
+    - 'NTGY.MC'   # Naturgy Energy
+
+    # Oil & Gas
+    - 'REP.MC'    # Repsol
+
+    # Telecommunications
+    - 'TEF.MC'    # Telefónica
+
+    # Retail & Consumer
+    - 'ITX.MC'    # Inditex (Zara)
+
+    # Construction & Infrastructure
+    - 'ACS.MC'    # ACS Group
+    - 'FER.MC'    # Ferrovial
+    - 'FCC.MC'    # FCC
+
+    # Industrial & Services
+    - 'ACX.MC'    # Acerinox
+    - 'ANA.MC'    # Acciona
+    - 'AENA.MC'   # Aena
+    - 'IAG.MC'    # IAG (British Airways/Iberia)
+    - 'MEL.MC'    # Meliá Hotels
+    - 'GRF.MC'    # Grifols
+    - 'IDR.MC'    # Indra Sistemas
+    - 'COL.MC'    # Inmobiliaria Colonial
+    - 'CLNX.MC'   # Cellnex Telecom
+    - 'ALM.MC'    # Almirall
+    - 'AMS.MC'    # Amadeus IT
+    - 'SGRE.MC'   # Siemens Gamesa
+    - 'VIS.MC'    # Viscofan
+    - 'MRL.MC'    # Merlin Properties
+    - 'ROVI.MC'   # Laboratorios Rovi
+    - 'SLR.MC'    # Solaria Energía
+
+quality:
+  min_roic: 0.08
+  min_roe: 0.10
+  min_current_ratio: 1.0
+  max_debt_equity: 2.0
+
+value:
+  max_pe: 35
+  max_pb: 10
+  max_ev_ebitda: 20
+
+growth:
+  min_revenue_growth: -0.05
+  min_earnings_growth: -0.05
+
+risk:
+  max_beta: 1.5
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025
+  rim_years: 10
+
+max_results: 35
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

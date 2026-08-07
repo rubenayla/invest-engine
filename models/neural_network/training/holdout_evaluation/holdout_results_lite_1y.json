@@ -1,0 +1,22 @@
+{
+  "target_horizon": "1y",
+  "train_cutoff": "2022-12-31",
+  "model_type": "lite",
+  "cv_validation": {
+    "rank_ic": 0.5800336341456466,
+    "top_decile_return": 0.5896432166261029,
+    "bottom_decile_return": -0.16846631141815632,
+    "decile_spread": 0.7581095280442591,
+    "ndcg@10": 0.030217825576847757,
+    "n_samples": 13426
+  },
+  "holdout_test": {
+    "rank_ic": 0.1735049950233834,
+    "top_decile_return": 0.4380558017970658,
+    "bottom_decile_return": 0.19868758738742032,
+    "decile_spread": 0.2393682144096455,
+    "ndcg@10": 0.39021593563054097,
+    "n_samples": 200
+  },
+  "timestamp": "2025-10-15T00:33:35.922112"
+}

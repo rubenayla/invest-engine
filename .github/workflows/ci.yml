@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'notes/**'
+      - '.agents/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'notes/**'
+      - '.agents/**'
+      - '.github/workflows/docs.yml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: 'uv.lock'
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Lint
+        run: |
+          uv run ruff check src tests || echo "::warning::Lint issues found (non-blocking)"
+          uv run ruff format --check src tests || echo "::warning::Format issues found (non-blocking)"
+
+      - name: Test (fast)
+        run: uv run pytest -m "not slow" --no-cov -q
+

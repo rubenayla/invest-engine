@@ -1,0 +1,40 @@
+# Simple test configuration for backtesting
+name: test_backtest
+
+# Short test period
+start_date: '2023-01-01'
+end_date: '2023-12-31'
+
+# Initial capital
+initial_capital: 10000
+
+# Rebalancing frequency
+rebalance_frequency: quarterly
+
+# Small universe for testing
+universe:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - SPY
+
+# Portfolio constraints
+max_positions: 3
+min_position_size: 0.10
+max_position_size: 0.40
+
+# Transaction costs
+transaction_cost: 0.001
+slippage: 0.001
+
+# Benchmark
+benchmark: SPY
+
+# Strategy configuration
+strategy:
+  quality_weight: 0.40
+  value_weight: 0.30
+  growth_weight: 0.20
+  risk_weight: 0.10
+  min_score: 0.40

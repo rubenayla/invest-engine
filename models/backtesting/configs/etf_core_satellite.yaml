@@ -1,0 +1,86 @@
+# ETF Core-Satellite Strategy Backtest Configuration
+name: etf_core_satellite_backtest
+
+# Backtest period
+start_date: '2020-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency
+rebalance_frequency: quarterly
+
+# Strategy type - IMPORTANT: This selects ETFPortfolioStrategy
+strategy_type: etf_portfolio
+
+# ETF universe - Mix of different asset classes
+universe:
+  # Core holdings (broad market)
+  - VTI   # Total Stock Market
+  - VOO   # S&P 500
+  - SPY   # S&P 500 SPDR
+  - IVV   # iShares Core S&P 500
+  - VT    # Total World Stock
+  
+  # International
+  - VXUS  # Total International Stock
+  - VEA   # Developed Markets
+  - VWO   # Emerging Markets
+  - EFA   # EAFE
+  
+  # Sectors for satellite positions
+  - XLK   # Technology
+  - XLF   # Financials
+  - XLV   # Healthcare
+  - XLE   # Energy
+  - XLI   # Industrials
+  - XLY   # Consumer Discretionary
+  - XLP   # Consumer Staples
+  - XLU   # Utilities
+  - XLRE  # Real Estate
+  - XLB   # Materials
+  
+  # Bonds (for comparison/diversification)
+  - AGG   # Aggregate Bond
+  - BND   # Total Bond Market
+  - TLT   # 20+ Year Treasury
+  
+  # Commodities
+  - GLD   # Gold
+  - SLV   # Silver
+  
+  # Growth/Value
+  - QQQ   # Nasdaq 100
+  - VUG   # Large Cap Growth
+  - VTV   # Large Cap Value
+  - SCHD  # Dividend ETF
+
+# Portfolio constraints
+max_positions: 10
+min_position_size: 0.05  # 5% minimum
+max_position_size: 0.60  # 60% maximum (for core position)
+
+# Transaction costs
+transaction_cost: 0.0005  # 0.05% per trade (ETFs are cheaper)
+slippage: 0.0005  # 0.05% slippage
+
+# Benchmark
+benchmark: SPY
+
+# ETF Portfolio Strategy Configuration
+strategy:
+  # Core-satellite approach
+  strategy_type: core_satellite
+  
+  # Core allocation (60% to broad market ETF)
+  core_allocation: 0.60
+  
+  # Maximum number of ETF positions
+  max_positions: 8
+  
+  # Rebalancing threshold
+  rebalance_threshold: 0.05
+  
+  # Maximum acceptable expense ratio (1%)
+  expense_ratio_limit: 0.01

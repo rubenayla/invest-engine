@@ -1,0 +1,41 @@
+# Warren Buffett's Japanese Stock Favorites
+# Based on Berkshire Hathaway's actual holdings and Buffett's stated preferences
+
+name: "japan_buffett_favorites"
+description: "Japanese stocks aligned with Warren Buffett's investment philosophy"
+
+universe:
+  region: "JP"
+  market: "japan_buffett"
+  min_market_cap: 3000  # $3B minimum (USD millions)
+
+quality:
+  min_roe: 0.10
+  min_roic: 0.08
+  max_debt_equity: 1.0
+  min_current_ratio: 1.2
+
+value:
+  max_pe: 20
+  max_pb: 2.0
+  max_ev_ebitda: 15
+
+growth:
+  min_revenue_growth: 0.03
+  min_earnings_growth: 0.02
+
+risk:
+  max_beta: 1.3
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025
+  rim_years: 10
+
+max_results: 10
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

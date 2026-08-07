@@ -1,0 +1,42 @@
+name: "sp500_test25_screen"
+description: "A test screen of the top 25 S&P 500 companies by market cap."
+
+universe:
+  pre_screening_universe: "sp500"
+  top_n_by_market_cap: 25
+  region: "US"
+  min_market_cap: 1000  # $1B minimum
+  exclude_sectors: 
+    - "Real Estate"
+    - "Utilities"  # Often regulated, different dynamics
+
+quality:
+  min_roic: 0.12        # 12% minimum ROIC
+  min_roe: 0.15         # 15% minimum ROE
+  min_current_ratio: 1.2 # Minimum liquidity
+  max_debt_equity: 0.6   # Maximum 60% debt/equity
+
+value:
+  max_pe: 25            # Maximum P/E ratio
+  max_pb: 3.5           # Maximum P/B ratio
+  max_ev_ebitda: 15     # Maximum EV/EBITDA
+
+growth:
+  min_revenue_growth: 0.03  # Minimum 3% revenue growth
+  min_earnings_growth: 0.05 # Minimum 5% earnings growth
+
+risk:
+  max_beta: 1.5         # Not too volatile
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025  # 2.5%
+  rim_years: 10
+
+max_results: 25
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

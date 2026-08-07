@@ -1,0 +1,93 @@
+# Backtesting configuration for S&P 500 screening strategy
+name: sp500_quality_value_backtest
+
+# Backtest period
+start_date: '2020-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency: monthly, quarterly, annually
+rebalance_frequency: quarterly
+
+# Investment universe - top S&P 500 stocks by market cap
+# You can expand this list to include more stocks
+universe:
+  - AAPL
+  - MSFT
+  - AMZN
+  - NVDA
+  - GOOGL
+  - META
+  - TSLA
+  - BRK-B
+  - JPM
+  - JNJ
+  - V
+  - PG
+  - UNH
+  - MA
+  - HD
+  - DIS
+  - BAC
+  - ABBV
+  - PFE
+  - COST
+  - WMT
+  - CVX
+  - XOM
+  - KO
+  - PEP
+  - TMO
+  - MRK
+  - CSCO
+  - ADBE
+  - ACN
+  - LLY
+  - NKE
+  - MCD
+  - ABT
+  - ORCL
+  - INTC
+  - VZ
+  - CRM
+  - AMD
+  - QCOM
+  # ETFs for comparison
+  - SPY  # S&P 500 ETF
+  - QQQ  # Nasdaq 100 ETF
+  - IWM  # Russell 2000 ETF
+  - VTI  # Total Market ETF
+
+# Portfolio constraints
+max_positions: 15
+min_position_size: 0.02  # 2% minimum
+max_position_size: 0.15  # 15% maximum
+
+# Transaction costs
+transaction_cost: 0.001  # 0.1% per trade
+slippage: 0.001  # 0.1% slippage
+
+# Benchmark for comparison
+benchmark: SPY
+
+# Strategy configuration
+strategy:
+  # Scoring weights
+  quality_weight: 0.35
+  value_weight: 0.35
+  growth_weight: 0.20
+  risk_weight: 0.10
+  
+  # Minimum composite score to include
+  min_score: 0.50
+  
+  # Screening thresholds
+  min_roe: 0.10  # 10% ROE minimum
+  max_debt_equity: 2.0  # Max 2x debt/equity
+  min_current_ratio: 1.0
+  max_pe: 35.0  # Max P/E of 35
+  max_pb: 6.0  # Max P/B of 6
+  min_revenue_growth: -0.05  # Allow slight negative growth
+  max_beta: 1.5  # Avoid very high beta stocks

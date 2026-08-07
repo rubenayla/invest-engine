@@ -1,0 +1,57 @@
+description: Simple mixed portfolio analysis - no universe restrictions
+name: simple_mixed_analysis
+
+# Just list the tickers you want to compare!
+# The system automatically detects international stocks
+universe:
+  region: ALL
+  custom_tickers:
+    # US Tech
+    - AAPL
+    - MSFT
+    - NVDA
+    
+    # Japanese Giants
+    - 7203.T    # Toyota
+    - 8058.T    # Mitsubishi Corp
+    - 8002.T    # Marubeni (from your wallet)
+    
+    # European
+    - ASML.AS   # ASML
+    - SAP.DE    # SAP
+    
+    # Your watchlist favorites
+    - ACGL      # Insurance
+    - NEM       # Gold
+    - HIG       # Hartford
+    - BIDU      # Baidu
+    - PYPL      # PayPal
+    - QCOM      # Qualcomm
+
+# Relaxed criteria for international comparison
+value:
+  max_pe: 35
+  max_pb: 8
+  max_ev_ebitda: 25
+
+quality:
+  min_roe: 0.05
+  min_current_ratio: 0.8
+  max_debt_equity: 2.0
+
+growth:
+  min_revenue_growth: -0.10
+  min_earnings_growth: -0.10
+
+# Other settings remain standard
+generate_reports: true
+save_data: true
+max_results: 20
+sort_by: composite_score
+
+valuation:
+  models:
+    - dcf
+  dcf_years: 10
+  terminal_growth_rate: 0.025
+  required_return: 0.10

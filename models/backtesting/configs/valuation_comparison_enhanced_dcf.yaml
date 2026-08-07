@@ -1,0 +1,51 @@
+# Test Enhanced DCF with dividend policy awareness
+name: enhanced_dcf_valuation_test
+strategy_type: pipeline
+
+start_date: '2020-01-01'
+end_date: '2024-12-31'
+initial_capital: 100000
+rebalance_frequency: quarterly
+
+# Mix of dividend and growth stocks for testing
+universe:
+  - AAPL   # Growth with modest dividends
+  - MSFT   # Balanced growth and dividends
+  - JNJ    # Dividend aristocrat
+  - PG     # Consistent dividend payer
+  - KO     # High dividend yield
+  - JPM    # Financial with good dividend
+  - PFE    # Healthcare dividend
+  - HD     # Retail with growing dividends
+
+max_positions: 6
+min_position_size: 0.10
+max_position_size: 0.25
+transaction_cost: 0.0005
+slippage: 0.0005
+benchmark: SPY
+
+strategy:
+  max_positions: 6
+  min_composite_score: 45
+  
+  # Use Enhanced DCF that accounts for dividend policy
+  valuation_models: ["dcf_enhanced"]
+  
+  # Quality thresholds - favor companies with good capital allocation
+  min_roe: 0.12
+  min_roic: 0.10
+  max_debt_equity: 1.5
+  min_current_ratio: 1.2
+  
+  # Value thresholds
+  max_pe: 30.0
+  max_pb: 5.0
+  max_ev_ebitda: 18.0
+  
+  # Growth thresholds - allow for dividend-focused companies
+  min_revenue_growth: -0.05
+  min_earnings_growth: -0.05
+  
+  # Risk thresholds
+  max_beta: 1.3

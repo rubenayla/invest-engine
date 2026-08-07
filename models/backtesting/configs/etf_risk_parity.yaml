@@ -1,0 +1,69 @@
+# ETF Risk Parity Strategy Backtest Configuration
+name: etf_risk_parity_backtest
+
+# Backtest period
+start_date: '2020-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency
+rebalance_frequency: monthly  # More frequent for risk parity
+
+# Strategy type
+strategy_type: etf_portfolio
+
+# ETF universe - Diverse asset classes for risk parity
+universe:
+  # Equities
+  - VTI   # US Total Market
+  - VXUS  # International
+  - VWO   # Emerging Markets
+  
+  # Bonds
+  - AGG   # Aggregate Bond
+  - BND   # Total Bond
+  - TLT   # Long-term Treasury
+  - IEF   # Intermediate Treasury
+  - LQD   # Investment Grade Corporate
+  - HYG   # High Yield
+  
+  # Commodities
+  - GLD   # Gold
+  - SLV   # Silver
+  - DBA   # Agriculture
+  - USO   # Oil
+  - PDBC  # Diversified Commodities
+  
+  # Real Estate
+  - VNQ   # US Real Estate
+  - REET  # Global Real Estate
+  - IYR   # US Real Estate ETF
+  - XLRE  # Real Estate Select Sector
+
+# Portfolio constraints
+max_positions: 10
+min_position_size: 0.05
+max_position_size: 0.40
+
+# Transaction costs
+transaction_cost: 0.0005
+slippage: 0.0005
+
+# Benchmark
+benchmark: SPY
+
+# Risk Parity Strategy Configuration
+strategy:
+  # Risk parity allocation
+  strategy_type: risk_parity
+  
+  # Maximum positions
+  max_positions: 8
+  
+  # Rebalancing threshold
+  rebalance_threshold: 0.03  # Tighter for risk parity
+  
+  # Expense ratio limit
+  expense_ratio_limit: 0.01

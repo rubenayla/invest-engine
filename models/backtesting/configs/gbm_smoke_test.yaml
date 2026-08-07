@@ -1,0 +1,39 @@
+# GBM Top Decile 1y - Smoke Test (2023-2024 only)
+# Quick test to verify backtest framework works
+
+name: gbm_smoke_test
+
+# Short test period (using dates with complete price data)
+start_date: '2021-01-01'
+end_date: '2022-07-12'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalance quarterly
+rebalance_frequency: quarterly
+
+# Universe: All stocks with sufficient history
+universe: []  # Empty = use all available stocks from database
+
+# Portfolio constraints
+max_positions: 50
+min_position_size: 0.01  # 1% minimum
+max_position_size: 0.20  # 20% maximum
+
+# Transaction costs
+transaction_cost: 0.001  # 0.1%
+slippage: 0.0005  # 0.05%
+
+# Benchmark
+benchmark: SPY
+
+# Strategy: GBM Ranking
+strategy_type: gbm_ranking
+
+strategy:
+  model_path: 'models/neural_network/training/gbm_model_1y.txt'
+  model_type: 'full'  # Requires 12 quarters of history
+  selection_method: 'top_decile'  # Top 10% by predicted return
+  weighting: 'equal_weight'  # Equal weight all positions
+  min_prediction: 0.0  # Only buy stocks with positive predicted return

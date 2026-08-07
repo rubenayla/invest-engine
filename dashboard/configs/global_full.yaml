@@ -1,0 +1,35 @@
+name: "global_full_screen"
+description: "A comprehensive screen of global markets (S&P 500, Merval, Nifty 50, Nikkei 225)."
+
+universe:
+  pre_screening_universe: "global"
+  region: "ALL"
+  min_market_cap: 0  # No limit for now
+  
+quality:
+  min_roic: 0.05        # 5% minimum ROIC (relaxed for emerging)
+  min_roe: 0.08         # 8% minimum ROE
+  min_current_ratio: 0.8 # Relaxed liquidity
+
+value:
+  max_pe: 50            # Higher PE allowed for growth
+  max_pb: 15           
+
+growth:
+  min_revenue_growth: -0.10  
+  min_earnings_growth: -0.10 
+
+risk:
+  max_beta: 2.0         # Allow more volatility
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["base"]
+  dcf_years: 10
+  terminal_growth_rate: 0.03
+
+max_results: 1000
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

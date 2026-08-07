@@ -1,0 +1,76 @@
+# Opportunity Scanner Configuration
+# Weights and thresholds for the daily opportunity scanner
+
+name: "opportunity_scanner"
+description: "Configuration for daily opportunity scoring and notification system"
+
+# Component weights (must sum to 1.0)
+# These determine how much each dimension contributes to the final score
+weights:
+  quality: 0.25   # Business quality (ROE, margins, leverage)
+  value: 0.30     # Valuation attractiveness (P/E, P/B, model upside)
+  growth: 0.20    # Growth potential (revenue, earnings trends)
+  risk: 0.10      # Risk level (lower risk = higher score)
+  catalyst: 0.15  # Timing signals (52w discount, momentum)
+
+# Threshold management
+threshold:
+  min: 65         # Never notify below this (quality floor)
+  max: 90         # Always notify above this (exceptional)
+  target_per_week: 1.0  # Target notification rate
+  adjustment_step: 1.0  # Daily adjustment amount
+  dry_spell_days: 21    # Emergency lower after this many days
+
+# Quality scoring parameters
+# Format: [min_val, target, max_val]
+# Score is 0-20 below min, ~70 at target, 100 at max
+quality:
+  roe: [5, 15, 30]              # Return on Equity (%)
+  current_ratio: [0.8, 1.5, 3.0]
+  debt_equity: [0, 0.5, 2.0]    # Inverse: lower is better
+  operating_margin: [0, 15, 40]  # Operating Margin (%)
+  profit_margin: [0, 10, 30]     # Net Profit Margin (%)
+
+# Value scoring parameters
+value:
+  pe: [8, 15, 30]               # P/E ratio (inverse)
+  pb: [1, 2.5, 5]               # P/B ratio (inverse)
+  upside: [-20, 20, 50]         # Model upside (%)
+
+# Growth scoring parameters
+growth:
+  revenue_growth: [-5, 10, 30]   # Revenue growth (%)
+  earnings_growth: [-10, 15, 40] # Earnings growth (%)
+  price_trend: [-10, 5, 15]      # 30-day price trend (%)
+
+# Risk scoring parameters (higher score = lower risk)
+risk:
+  debt_equity: [0, 0.5, 2.0]    # Inverse
+  current_ratio: [0.5, 1.5, 3.0]
+
+# Catalyst scoring parameters
+catalyst:
+  discount_52w: [0, 15, 40]     # Discount from 52-week high (%)
+  buffer_52w: [0, 30, 80]       # Buffer from 52-week low (%)
+
+# Universe settings
+universe:
+  source: "database"           # Use all stocks in database
+  # Or specify sectors/tickers:
+  # sectors:
+  #   - "Technology"
+  #   - "Healthcare"
+  # exclude_sectors:
+  #   - "Real Estate"
+  #   - "Utilities"
+  # tickers:
+  #   - "AAPL"
+  #   - "MSFT"
+
+# Notification settings (for OpenClaw integration)
+notification:
+  send_on_exceptional: true    # Always notify for scores >= 90
+  include_weekly_report: true  # Generate weekly summary on Sundays
+  quiet_hours:                 # Don't send during these hours (UTC)
+    start: 22
+    end: 6

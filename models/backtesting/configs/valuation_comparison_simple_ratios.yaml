@@ -1,0 +1,61 @@
+# Long-term backtest comparing Simple Ratios valuation model
+name: simple_ratios_valuation_test
+strategy_type: pipeline
+
+start_date: '2015-01-01'
+end_date: '2024-12-31'
+initial_capital: 100000
+rebalance_frequency: quarterly
+
+universe:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - JNJ
+  - JPM
+  - PG
+  - KO
+  - HD
+  - SPY
+
+max_positions: 10
+min_position_size: 0.05
+max_position_size: 0.20
+transaction_cost: 0.0005
+slippage: 0.0005
+benchmark: SPY
+
+strategy:
+  max_positions: 10
+  min_composite_score: 50
+  
+  # Use Simple Ratios valuation model
+  valuation_models: ["simple_ratios"]
+  
+  # Simple ratios targets (Graham-style values)
+  pe_target: 15.0        # Conservative P/E target
+  pb_target: 2.5         # Reasonable P/B multiple
+  ps_target: 2.0         # Conservative sales multiple  
+  ev_ebitda_target: 12.0 # EBITDA multiple
+  dividend_yield_target: 0.03  # 3% dividend yield target
+  peg_target: 1.0        # PEG = 1.0 is "fair value"
+  
+  # Quality thresholds (same as DCF for fair comparison)
+  min_roe: 0.10
+  min_roic: 0.12
+  max_debt_equity: 2.0
+  min_current_ratio: 1.0
+  
+  # Value thresholds  
+  max_pe: 25.0
+  max_pb: 4.0
+  max_ev_ebitda: 15.0
+  
+  # Growth thresholds
+  min_revenue_growth: 0.0
+  min_earnings_growth: 0.0
+  
+  # Risk thresholds
+  max_beta: 1.5

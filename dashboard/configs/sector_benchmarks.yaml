@@ -1,0 +1,87 @@
+Technology:
+  typical_pe_range: [15, 35]
+  typical_roe_range: [0.15, 0.35]
+  typical_roic_range: [0.12, 0.30]
+  cyclicality: "medium"
+  capital_intensity: "low"
+  margin_stability: "variable"
+
+Consumer Staples:
+  typical_pe_range: [18, 28]
+  typical_roe_range: [0.12, 0.25]
+  typical_roic_range: [0.10, 0.20]
+  cyclicality: "low"
+  capital_intensity: "medium"
+  margin_stability: "stable"
+
+Healthcare:
+  typical_pe_range: [16, 30]
+  typical_roe_range: [0.10, 0.25]
+  typical_roic_range: [0.08, 0.22]
+  cyclicality: "low"
+  capital_intensity: "high"
+  margin_stability: "stable"
+
+Financials:
+  typical_pe_range: [8, 18]
+  typical_roe_range: [0.08, 0.18]
+  typical_roic_range: [0.06, 0.15]
+  cyclicality: "high"
+  capital_intensity: "low"
+  margin_stability: "volatile"
+
+Energy:
+  typical_pe_range: [8, 25]
+  typical_roe_range: [0.05, 0.20]
+  typical_roic_range: [0.04, 0.18]
+  cyclicality: "high"
+  capital_intensity: "high"
+  margin_stability: "volatile"
+
+Materials:
+  typical_pe_range: [10, 20]
+  typical_roe_range: [0.08, 0.18]
+  typical_roic_range: [0.06, 0.16]
+  cyclicality: "high"
+  capital_intensity: "high"
+  margin_stability: "volatile"
+
+Industrials:
+  typical_pe_range: [12, 22]
+  typical_roe_range: [0.10, 0.20]
+  typical_roic_range: [0.08, 0.18]
+  cyclicality: "medium"
+  capital_intensity: "medium"
+  margin_stability: "variable"
+
+Consumer Discretionary:
+  typical_pe_range: [15, 30]
+  typical_roe_range: [0.12, 0.25]
+  typical_roic_range: [0.10, 0.22]
+  cyclicality: "high"
+  capital_intensity: "medium"
+  margin_stability: "variable"
+
+Utilities:
+  typical_pe_range: [16, 22]
+  typical_roe_range: [0.08, 0.12]
+  typical_roic_range: [0.06, 0.10]
+  cyclicality: "low"
+  capital_intensity: "high"
+  margin_stability: "stable"
+
+Real Estate:
+  typical_pe_range: [12, 25]
+  typical_roe_range: [0.06, 0.15]
+  typical_roic_range: [0.04, 0.12]
+  cyclicality: "medium"
+  capital_intensity: "high"
+  margin_stability: "variable"
+
+Communication Services:
+  typical_pe_range: [14, 28]
+  typical_roe_range: [0.10, 0.22]
+  typical_roic_range: [0.08, 0.20]
+  cyclicality: "medium"
+  capital_intensity: "medium"
+  margin_stability: "variable"

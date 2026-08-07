@@ -1,0 +1,75 @@
+description: Analyze best opportunities from watchlist
+name: watchlist_analysis
+generate_reports: true
+save_data: true
+max_results: 20
+sort_by: composite_score
+
+universe:
+  region: US
+  custom_tickers:
+    - ACGL
+    - NEM
+    - NE
+    - BIDU
+    - PYPL
+    - QCOM
+    - DHI
+    - HIG
+    - ALLE
+    - NUE
+    - LAMR
+    - META
+    - ORCL
+    - IBM
+    - CSCO
+    - SAP
+    - EL
+    - MSTR
+    - BBAI
+    - ASML
+    - PLTR
+    - CVX
+    - MITSY
+  min_market_cap: 100
+  max_market_cap: null
+
+valuation:
+  models:
+    - dcf
+    - rim
+  dcf_years: 10
+  rim_years: 10
+  terminal_growth_rate: 0.025
+  required_return: 0.10
+  risk_free_rate: 0.045
+  scenarios:
+    - bear
+    - base
+    - bull
+
+value:
+  max_pe: 25
+  max_pb: 3.5
+  max_ev_ebitda: 15
+  max_ev_ebit: 12
+  max_p_fcf: 20
+
+quality:
+  min_roe: 0.10
+  min_roic: 0.08
+  min_current_ratio: 1.0
+  max_debt_equity: 1.0
+  min_interest_coverage: 2.0
+
+growth:
+  min_revenue_growth: 0.02
+  min_earnings_growth: 0.05
+  min_fcf_growth: 0.03
+  min_book_value_growth: 0.05
+
+risk:
+  max_beta: 2.0
+  min_liquidity_ratio: 0.8
+  max_concentration_risk: 0.5
+  cyclical_adjustment: true

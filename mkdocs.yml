@@ -1,0 +1,147 @@
+site_name: Systematic Investment Analysis Framework
+site_description: A configuration-driven, objective approach to investment analysis
+site_author: Investment Analysis Framework
+site_url: https://rubenayla.github.io/invest-engine/
+
+repo_name: rubenayla/invest-engine
+repo_url: https://github.com/rubenayla/invest-engine
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Quick Reference: getting-started/quick-reference.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Overview: user-guide/overview.md
+    - Running Analysis: user-guide/running-analysis.md
+    - Dashboard: user-guide/dashboard.md
+    - Technical Analysis: user-guide/technical-analysis.md
+    - Understanding Results: user-guide/understanding-results.md
+    - Configuration Options: user-guide/configuration-options.md
+    - Output Formats: user-guide/output-formats.md
+    - Troubleshooting: user-guide/troubleshooting.md
+  - Valuation Models:
+    - Overview: models/index.md
+    - Active Models:
+      - AutoResearch: models/autoresearch.md
+      - GBM 1y / 3y: models/gbm-full.md
+      - GBM Opportunistic: models/gbm-opportunistic.md
+      - DCF: models/dcf.md
+      - Residual Income (RIM): models/rim.md
+    - Retired Models:
+      - GBM Lite: models/gbm-lite.md
+      - Multi-Stage DCF: models/multi-stage-dcf.md
+      - Growth DCF: models/growth-dcf.md
+      - Enhanced DCF: models/dcf-enhanced.md
+      - Simple Ratios: models/simple-ratios.md
+  - Developer Guide:
+    - Architecture: developer-guide/architecture.md
+    - Dashboard Scaling: dashboard-scaling-solution.md
+    - Pipeline Components: developer-guide/pipeline-components.md
+    - Adding New Screeners: developer-guide/adding-screeners.md
+    - Data Providers: developer-guide/data-providers.md
+    - Extending the Framework: developer-guide/extending.md
+  - API Reference:
+    - Analysis Pipeline: api-reference/pipeline.md
+    - Screening Modules: api-reference/screening.md
+    - Data Providers: api-reference/data.md
+    - Configuration Schema: api-reference/configuration.md
+  - Tutorials:
+    - Basic Stock Screening: tutorials/basic-screening.md
+    - Custom Configurations: tutorials/custom-configurations.md
+    - S&P 500 Analysis: tutorials/sp500-analysis.md
+    - International Markets: tutorials/international-markets.md
+    - AI Tools Integration: tutorials/ai-tools.md
+  - Contributing: contributing.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: rubenayla
+      repo: invest
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/rubenayla/invest-engine
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/invest/
+
+copyright: Copyright &copy; 2024 Investment Analysis Framework

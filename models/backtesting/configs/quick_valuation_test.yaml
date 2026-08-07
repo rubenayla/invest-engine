@@ -1,0 +1,50 @@
+# Quick valuation model test - stocks only
+name: quick_valuation_test
+strategy_type: pipeline
+
+start_date: '2022-01-01'
+end_date: '2023-12-31'
+initial_capital: 50000
+rebalance_frequency: quarterly
+
+# Stocks only - no ETFs for DCF testing
+universe:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - JNJ
+  - JPM
+
+max_positions: 3
+min_position_size: 0.15
+max_position_size: 0.40
+transaction_cost: 0.001
+slippage: 0.001
+benchmark: SPY
+
+strategy:
+  max_positions: 3
+  min_composite_score: 40
+  
+  # Test simple ratios
+  valuation_models: ["simple_ratios"]
+  
+  # Simple ratios targets
+  pe_target: 15.0
+  pb_target: 2.5
+  ps_target: 2.0
+  ev_ebitda_target: 12.0
+  dividend_yield_target: 0.03
+  peg_target: 1.0
+  
+  # Relaxed thresholds for testing
+  min_roe: 0.05
+  min_roic: 0.08
+  max_debt_equity: 3.0
+  min_current_ratio: 0.8
+  max_pe: 35.0
+  max_pb: 6.0
+  max_ev_ebitda: 20.0
+  min_revenue_growth: -0.1
+  min_earnings_growth: -0.1
+  max_beta: 2.0

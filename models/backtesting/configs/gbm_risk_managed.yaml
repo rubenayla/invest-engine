@@ -1,0 +1,47 @@
+# Risk-Managed GBM Strategy
+# Uses GBM Lite 1y with inverse volatility weighting
+# Top 20% selection + volatility-based allocation
+# Expected: Best Sharpe ratio, lower drawdowns
+
+name: gbm_risk_managed
+
+# Backtest period (using 2022-07-12 end date due to price data availability)
+start_date: '2010-01-01'
+end_date: '2022-07-12'
+
+# Initial capital
+initial_capital: 100000
+
+# Monthly rebalancing for better risk management
+rebalance_frequency: monthly
+
+# Universe
+universe: []
+
+# Portfolio constraints - more diversified
+max_positions: 999
+min_position_size: 0.01  # 1% minimum
+max_position_size: 0.10  # 10% max (more diversified)
+
+# Transaction costs (higher due to monthly rebalancing)
+transaction_cost: 0.0010
+slippage: 0.0005
+
+# Benchmark
+benchmark: SPY
+
+# Strategy type
+strategy_type: gbm_ranking
+
+strategy:
+  model_path: 'models/neural_network/training/gbm_lite_model_1y.txt'
+  model_type: 'lite'
+
+  # Top 20% - broader selection for diversification
+  selection_method: 'top_quintile'
+
+  # Inverse volatility weighting - lower vol stocks get higher weight
+  weighting: 'inverse_volatility'
+
+  # Only positive predictions
+  min_prediction: 0.02  # 2% minimum

@@ -1,0 +1,38 @@
+# SPY Benchmark - Buy and Hold
+# Simple buy-and-hold S&P 500 ETF for comparison
+# This is our baseline to beat
+
+name: spy_benchmark
+
+# Backtest period (using 2022-07-12 end date due to price data availability)
+start_date: '2010-01-01'
+end_date: '2022-07-12'
+
+# Initial capital
+initial_capital: 100000
+
+# No rebalancing - buy and hold
+rebalance_frequency: annually  # Just once at start effectively
+
+# Universe: Only SPY
+universe:
+  - SPY
+
+# Portfolio constraints
+max_positions: 1
+min_position_size: 1.0  # 100% in SPY
+max_position_size: 1.0
+
+# Transaction costs (minimal for single purchase)
+transaction_cost: 0.0005  # 0.05%
+slippage: 0.0001  # 0.01%
+
+# No benchmark (this IS the benchmark)
+benchmark: SPY
+
+# Strategy: market cap (but only 1 stock, so 100% SPY)
+strategy_type: market_cap
+
+strategy:
+  # No special config needed
+  {}

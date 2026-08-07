@@ -1,0 +1,46 @@
+# Quick ETF Strategy Test Configuration
+name: etf_quick_test
+
+# Short period for quick testing
+start_date: '2023-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency
+rebalance_frequency: quarterly
+
+# Strategy type
+strategy_type: etf_portfolio
+
+# Small universe for quick testing
+universe:
+  - SPY   # S&P 500
+  - QQQ   # Nasdaq 100
+  - IWM   # Small Cap
+  - AGG   # Bonds
+  - GLD   # Gold
+  - VNQ   # Real Estate
+  - XLK   # Technology
+  - XLF   # Financials
+
+# Portfolio constraints
+max_positions: 5
+min_position_size: 0.10
+max_position_size: 0.40
+
+# Transaction costs
+transaction_cost: 0.001
+slippage: 0.001
+
+# Benchmark
+benchmark: SPY
+
+# Strategy configuration
+strategy:
+  strategy_type: core_satellite
+  core_allocation: 0.50
+  max_positions: 4
+  rebalance_threshold: 0.05
+  expense_ratio_limit: 0.02

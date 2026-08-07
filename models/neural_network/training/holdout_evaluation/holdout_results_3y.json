@@ -1,0 +1,21 @@
+{
+  "target_horizon": "3y",
+  "train_cutoff": "2022-12-31",
+  "cv_validation": {
+    "rank_ic": 0.6377271779044333,
+    "top_decile_return": 1.8422294661190302,
+    "bottom_decile_return": -0.09131303369667165,
+    "decile_spread": 1.9335424998157018,
+    "ndcg@10": 0.0003530255570958303,
+    "n_samples": 10092
+  },
+  "holdout_test": {
+    "rank_ic": 0.0,
+    "top_decile_return": 0.0,
+    "bottom_decile_return": 0.0,
+    "decile_spread": 0.0,
+    "ndcg@10": 0.0,
+    "n_samples": 0
+  },
+  "timestamp": "2025-10-15T00:29:54.712557"
+}

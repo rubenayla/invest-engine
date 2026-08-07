@@ -1,0 +1,44 @@
+# Quick test configuration for Market Cap strategy
+# Minimal universe and shorter period for fast testing
+name: market_cap_quick_test
+
+# Shorter backtest period for quick testing
+start_date: '2023-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency
+rebalance_frequency: quarterly
+
+# Strategy type
+strategy_type: market_cap
+
+# Small universe for quick testing - just the mega caps
+universe:
+  - AAPL
+  - MSFT
+  - AMZN
+  - NVDA
+  - GOOGL
+  - SPY  # Benchmark
+
+# Portfolio constraints
+max_positions: 5
+min_position_size: 0.10
+max_position_size: 0.30
+
+# Transaction costs
+transaction_cost: 0.001
+slippage: 0.001
+
+# Benchmark
+benchmark: SPY
+
+# Market Cap Strategy configuration
+strategy:
+  max_positions: 3  # Top 3 stocks only
+  weighting: equal  # Equal weight for simplicity
+  min_market_cap: 100  # $100B minimum
+  rebalance_threshold: 0.05

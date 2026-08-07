@@ -1,0 +1,51 @@
+# Basic test configuration for unit testing
+name: "basic_test"
+description: "Basic configuration for testing purposes"
+
+universe:
+  name: "Test Universe"
+  region: "US"
+  custom_tickers: ["AAPL", "VALUE_STOCK", "POOR_QUALITY"]
+  filters:
+    min_market_cap_b: 1.0
+    max_market_cap_b: null
+    exclude_sectors: []
+    include_sectors: []
+
+screening:
+  quality:
+    min_roe: 0.10
+    min_roic: 0.08
+    max_debt_equity: 1.0
+    min_current_ratio: 1.0
+    weight: 0.30
+
+  value:
+    max_pe_ratio: 30.0
+    max_pb_ratio: 5.0
+    max_ev_ebitda: 20.0
+    weight: 0.30
+
+  growth:
+    min_revenue_growth: 0.03
+    min_earnings_growth: 0.02
+    weight: 0.25
+
+  risk:
+    max_beta: 1.8
+    max_debt_service_ratio: 0.4
+    weight: 0.15
+
+valuation:
+  dcf:
+    enabled: true
+    growth_rate: 0.04
+    discount_rate: 0.10
+    terminal_multiple: 15.0
+
+output:
+  formats: ["txt", "csv", "json"]
+  top_n: 10
+  include_all_stocks: true
+
+max_results: 50

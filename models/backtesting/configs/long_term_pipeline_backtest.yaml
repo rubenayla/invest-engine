@@ -1,0 +1,111 @@
+# Long-term backtest using REAL analysis pipeline (2010-2024)
+# This tests the actual DCF/RIM/screening logic used in normal analysis
+# NOT the simplified ratio-based screening
+
+name: long_term_pipeline_test
+
+# 15-year test period covering multiple market cycles
+start_date: '2010-01-01'
+end_date: '2024-12-31'
+
+# Strategy type - use the real pipeline!
+strategy_type: pipeline
+
+# Substantial initial capital for realistic testing
+initial_capital: 100000
+
+# Quarterly rebalancing for balanced approach
+rebalance_frequency: quarterly
+
+# Diversified large-cap universe for stable long-term testing
+# Mix of growth, value, and defensive stocks across sectors
+universe:
+  # Technology
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - ORCL
+  - ADBE
+  # Healthcare
+  - JNJ
+  - PFE
+  - UNH
+  - ABBV
+  # Financials
+  - JPM
+  - BAC
+  - WFC
+  - BRK-B
+  # Consumer
+  - PG
+  - KO
+  - WMT
+  - HD
+  - MCD
+  # Industrials
+  - BA
+  - CAT
+  - GE
+  # Energy
+  - XOM
+  - CVX
+  # Materials
+  - LIN
+  - SHW
+  # Utilities
+  - NEE
+  - SO
+  # ETFs for additional diversification
+  - SPY   # S&P 500
+  - QQQ   # NASDAQ 100
+  - VTI   # Total Stock Market
+
+# Portfolio constraints for risk management
+max_positions: 15              # Allow good diversification
+min_position_size: 0.03       # Minimum 3% position
+max_position_size: 0.15       # Maximum 15% position
+
+# Realistic transaction costs
+transaction_cost: 0.0005      # 0.05% - modern brokerage costs
+slippage: 0.0005              # 0.05% - market impact
+
+# Benchmark comparison
+benchmark: SPY
+
+# Strategy configuration - Real Analysis Pipeline Settings
+strategy:
+  # Portfolio management
+  max_positions: 15
+  min_composite_score: 50        # Minimum score from real pipeline
+  rebalance_threshold: 0.05      # 5% drift triggers rebalance
+  
+  # Quality thresholds (same as your normal analysis)
+  min_roe: 0.10                  # 10% minimum ROE
+  min_roa: 0.05                  # 5% minimum ROA
+  max_debt_equity: 2.0           # Max 2:1 debt/equity
+  min_current_ratio: 1.0         # Minimum current ratio
+  min_interest_coverage: 3.0     # 3x interest coverage
+  min_gross_margin: 0.20         # 20% gross margin
+  require_positive_fcf: true     # Positive free cash flow
+  
+  # Value thresholds (same as your normal analysis)
+  max_pe: 25.0                   # Max P/E ratio
+  max_pb: 4.0                    # Max P/B ratio
+  max_ps: 8.0                    # Max P/S ratio
+  min_dividend_yield: 0.0        # Minimum dividend yield
+  max_ev_ebitda: 15.0           # Max EV/EBITDA
+  max_peg: 2.0                   # Max PEG ratio
+  
+  # Growth thresholds (same as your normal analysis)
+  min_revenue_growth: 0.0        # Minimum revenue growth
+  min_earnings_growth: 0.0       # Minimum earnings growth
+  min_book_value_growth: 0.0     # Minimum book value growth
+  min_momentum_score: 30         # Minimum momentum score
+  
+  # Risk thresholds (same as your normal analysis)
+  max_beta: 1.5                  # Maximum beta
+  max_volatility: 0.4            # Maximum volatility (40%)
+  min_sharpe_ratio: 0.0          # Minimum Sharpe ratio
+  max_drawdown: 0.5              # Maximum drawdown (50%)

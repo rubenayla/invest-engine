@@ -1,0 +1,53 @@
+# Long-term backtest comparing DCF valuation model
+name: dcf_valuation_test
+strategy_type: pipeline
+
+start_date: '2015-01-01'
+end_date: '2024-12-31'
+initial_capital: 100000
+rebalance_frequency: quarterly
+
+universe:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - JNJ
+  - JPM
+  - PG
+  - KO
+  - HD
+  - SPY
+
+max_positions: 10
+min_position_size: 0.05
+max_position_size: 0.20
+transaction_cost: 0.0005
+slippage: 0.0005
+benchmark: SPY
+
+strategy:
+  max_positions: 10
+  min_composite_score: 50
+  
+  # Use DCF valuation model
+  valuation_models: ["dcf"]
+  
+  # Quality thresholds
+  min_roe: 0.10
+  min_roic: 0.12
+  max_debt_equity: 2.0
+  min_current_ratio: 1.0
+  
+  # Value thresholds  
+  max_pe: 25.0
+  max_pb: 4.0
+  max_ev_ebitda: 15.0
+  
+  # Growth thresholds
+  min_revenue_growth: 0.0
+  min_earnings_growth: 0.0
+  
+  # Risk thresholds
+  max_beta: 1.5

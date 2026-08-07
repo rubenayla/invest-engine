@@ -1,0 +1,41 @@
+# Japan TOPIX Core 30 Analysis Configuration
+# Focus on the largest 30 Japanese companies (TOPIX Core 30)
+
+name: "japan_topix30_screen"
+description: "Top 30 Japanese stocks by market capitalization (TOPIX Core 30)"
+
+universe:
+  region: "JP"
+  market: "japan_topix30"
+  min_market_cap: 5000  # $5B minimum (USD millions)
+
+quality:
+  min_roe: 0.08
+  min_roic: 0.06
+  max_debt_equity: 1.5
+  min_current_ratio: 1.0
+
+value:
+  max_pe: 25
+  max_pb: 2.5
+  max_ev_ebitda: 18
+
+growth:
+  min_revenue_growth: 0.02
+  min_earnings_growth: 0.01
+
+risk:
+  max_beta: 1.6
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025
+  rim_years: 10
+
+max_results: 15
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

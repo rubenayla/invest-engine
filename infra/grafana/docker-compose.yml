@@ -1,0 +1,25 @@
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: invest_grafana
+    user: "0"
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the real database directly (read-only)
+      - ../data/stock_data.db:/data/stock_data.db:ro
+
+      # Mount provisioning
+      - ./provisioning:/etc/grafana/provisioning
+
+      # Persistence
+      - grafana_storage:/var/lib/grafana
+    environment:
+      - GF_INSTALL_PLUGINS=frser-sqlite-datasource
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+
+volumes:
+  grafana_storage:

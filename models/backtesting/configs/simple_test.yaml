@@ -1,0 +1,37 @@
+# Very simple test - no benchmark comparison
+name: simple_test
+
+# Short test period
+start_date: '2023-01-01'
+end_date: '2023-06-30'
+
+# Initial capital
+initial_capital: 10000
+
+# Rebalancing frequency
+rebalance_frequency: quarterly
+
+# Just two stocks
+universe:
+  - AAPL
+  - MSFT
+
+# Portfolio constraints
+max_positions: 2
+min_position_size: 0.20
+max_position_size: 0.50
+
+# Transaction costs
+transaction_cost: 0.001
+slippage: 0.001
+
+# No benchmark for now
+benchmark: null
+
+# Strategy configuration
+strategy:
+  quality_weight: 0.50
+  value_weight: 0.30
+  growth_weight: 0.20
+  risk_weight: 0.00
+  min_score: 0.30

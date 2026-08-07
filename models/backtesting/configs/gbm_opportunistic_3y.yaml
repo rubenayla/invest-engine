@@ -1,0 +1,47 @@
+# GBM Opportunistic 3-Year Strategy
+# Uses GBM Opportunistic 3y model (best Rank IC: 0.64)
+# Targets peak returns within 3-year window
+# Expected: Highest risk-adjusted returns, best overall predictor
+
+name: gbm_opportunistic_3y
+
+# Backtest period (using 2022-07-12 end date due to price data availability)
+start_date: '2010-01-01'
+end_date: '2022-07-12'
+
+# Initial capital
+initial_capital: 100000
+
+# Quarterly rebalancing
+rebalance_frequency: quarterly
+
+# Universe
+universe: []
+
+# Portfolio constraints
+max_positions: 999
+min_position_size: 0.02  # 2% minimum (fewer positions for quality)
+max_position_size: 0.20  # 20% max
+
+# Transaction costs
+transaction_cost: 0.0010
+slippage: 0.0005
+
+# Benchmark
+benchmark: SPY
+
+# Strategy type
+strategy_type: gbm_ranking
+
+strategy:
+  model_path: 'models/neural_network/training/gbm_opportunistic_model_3y.txt'
+  model_type: 'full'  # Requires 12+ quarters
+
+  # Top decile - focus on best opportunities
+  selection_method: 'top_decile'
+
+  # Prediction-weighted: higher predicted peaks get more allocation
+  weighting: 'prediction_weighted'
+
+  # Only invest in positive predictions
+  min_prediction: 0.05  # 5% minimum predicted return

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Guardrail: never push with local uncommitted or staged changes.
+# This reduces "oops I forgot to commit" and prevents confusing states when other bots/agents push.
+
+if ! git diff --quiet; then
+  echo "pre-push: working tree has uncommitted changes. Commit or stash before pushing." >&2
+  exit 1
+fi
+
+if ! git diff --cached --quiet; then
+  echo "pre-push: index has staged changes. Commit before pushing." >&2
+  exit 1
+fi
+
+exit 0

@@ -1,0 +1,52 @@
+# GBM Top Decile Strategy - 1 Year Model
+# Uses Full GBM 1-year model to rank stocks, selects top 10%
+# Expected: Highest absolute returns with moderate risk
+
+name: gbm_top_decile_1y
+
+# Backtest period: 2010-2022 (12.5 years, multiple market cycles)
+# Using 2022-07-12 end date due to price data availability
+start_date: '2010-01-01'
+end_date: '2022-07-12'
+
+# Initial capital
+initial_capital: 100000
+
+# Quarterly rebalancing (balance between performance and costs)
+rebalance_frequency: quarterly
+
+# Universe: All stocks with sufficient history (12+ quarters)
+# Will be dynamically determined by strategy based on snapshot data
+universe: []  # Empty = use all available stocks from database
+
+# Portfolio constraints
+max_positions: 999  # No limit - let decile selection decide
+min_position_size: 0.01  # 1% minimum per position
+max_position_size: 0.20  # 20% maximum (prevents concentration)
+
+# Realistic transaction costs
+transaction_cost: 0.0010  # 0.1% per trade (realistic for retail/small institutional)
+slippage: 0.0005  # 0.05% slippage
+
+# Benchmark
+benchmark: SPY
+
+# Strategy type and configuration
+strategy_type: gbm_ranking
+
+strategy:
+  # Model configuration
+  model_path: 'models/neural_network/training/gbm_model_1y.txt'
+  model_type: 'full'  # Requires 12+ quarters of history
+
+  # Selection: Top decile (top 10%)
+  selection_method: 'top_decile'
+
+  # Weighting: Equal weight all selected stocks
+  weighting: 'equal_weight'
+
+  # Minimum predicted return to include (filter out negative predictions)
+  min_prediction: 0.0  # Include all (even negative) for true decile
+
+  # Risk management
+  # (These are handled by portfolio constraints above, not strategy)

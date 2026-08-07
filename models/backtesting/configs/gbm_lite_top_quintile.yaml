@@ -1,0 +1,46 @@
+# GBM Lite Top Quintile Strategy
+# Uses Lite GBM 1-year model (requires only 4 quarters)
+# Selects top 20% for better diversification
+# Expected: Good returns with better coverage and lower volatility
+
+name: gbm_lite_top_quintile
+
+# Backtest period (using 2022-07-12 end date due to price data availability)
+start_date: '2010-01-01'
+end_date: '2022-07-12'
+
+# Initial capital
+initial_capital: 100000
+
+# Quarterly rebalancing
+rebalance_frequency: quarterly
+
+# Universe
+universe: []  # Use all available from database
+
+# Portfolio constraints
+max_positions: 999
+min_position_size: 0.01
+max_position_size: 0.15  # 15% max (more diversified)
+
+# Transaction costs
+transaction_cost: 0.0010
+slippage: 0.0005
+
+# Benchmark
+benchmark: SPY
+
+# Strategy type
+strategy_type: gbm_ranking
+
+strategy:
+  model_path: 'models/neural_network/training/gbm_lite_model_1y.txt'
+  model_type: 'lite'  # Requires only 4+ quarters
+
+  # Top 20% for diversification
+  selection_method: 'top_quintile'
+
+  # Equal weight
+  weighting: 'equal_weight'
+
+  min_prediction: 0.0

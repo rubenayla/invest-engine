@@ -1,0 +1,38 @@
+name: "tech_giants_test"
+description: "Test analysis of Tesla, Apple, and Google"
+
+universe:
+  custom_tickers: ["TSLA", "AAPL", "GOOGL"]
+  region: "US"
+  min_market_cap: 100  # $100M minimum
+
+quality:
+  min_roic: 0.05        # 5% minimum ROIC (lowered to include Tesla)
+  min_roe: 0.05         # 5% minimum ROE (lowered to include Tesla)
+  min_current_ratio: 0.8 # Minimum liquidity
+  max_debt_equity: 200   # Maximum debt/equity (raised for Apple)
+
+value:
+  max_pe: 200            # Maximum P/E ratio (raised for Tesla)
+  max_pb: 55             # Maximum P/B ratio (raised for Apple)
+  max_ev_ebitda: 100     # Maximum EV/EBITDA
+
+growth:
+  min_revenue_growth: -0.2  # Allow negative growth
+  min_earnings_growth: -0.2 # Allow negative growth
+
+risk:
+  max_beta: 2.0         # Allow higher volatility
+  cyclical_adjustment: false
+
+valuation:
+  models: ["dcf"]
+  scenarios: ["base"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025  # 2.5%
+  rim_years: 10
+
+max_results: 3
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

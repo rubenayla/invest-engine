@@ -1,0 +1,121 @@
+commit	spearman	training_s	status	description
+aed5d64	0.325430	1.5	keep	baseline LightGBM 500 rounds
+fb7746a	0.430575	7.4	keep	log target + more features + 1000 rounds + deeper trees
+33d56de	0.435008	13.1	keep	LightGBM + CatBoost ensemble blend
+f72d636	0.420503	14.9	discard	sector-relative features + momentum reversal 3m
+3f4a22f	0.420936	40.9	discard	huber loss + 3-model ensemble + 1500 rounds
+6116a26	0.480380	14.0	keep	winsorize target at 95th pct before log transform
+1e09c99	0.445107	14.7	discard	winsorize at 90th pct (too aggressive)
+97e3844	0.445107	14.7	discard	recency sample weights 3y half-life
+057908c	0.466259	14.7	discard	winsorize at 97th pct
+163b0f3	0.476381	22.2	discard	rank-target LightGBM + rank-based blending
+80e3c23	0.484035	16.3	keep	macro interactions + value-momentum + bilateral winsorize
+3667a90	0.479144	36.9	discard	diverse 3-LightGBM + CatBoost ensemble
+4a67839	0.474748	17.3	discard	LightGBM only lr=0.02 2000 rounds
+d14294e	0.470332	23.8	discard	quantile LightGBM + rank-based blend of 3 models
+a4a0c98	0.465462	15.2	discard	winsorize at 5th/93rd pct
+159c267	0.473409	15.1	discard	winsorize top only at 95th (no bottom clip)
+cb31bf9	0.474561	23.3	discard	CatBoost RMSE loss + depth 10 + l2_reg 5
+8f7396b	0.467104	10.2	discard	LightGBM fewer leaves 63 more regularization
+192f9d8	0.476230	17.5	discard	LightGBM 255 leaves depth 12 higher reg
+96a96d7	0.455247	15.8	discard	quality-growth interactions price range pos macro interactions
+81ab313	0.497767	13.6	keep	simplify: only vix_x_dist_high interaction, remove noisy features
+7c63838	0.471753	13.4	discard	remove valuation and quality rank composites
+f19b135	0.478390	14.1	discard	remove growth composite and dist_high_vol_ratio
+70eaf0a	0.444337	5.8	discard	early stopping with temporal validation split
+0a3d680	0.509282	18.2	keep	CatBoost 1500 iters lr=0.02 l2=5.0
+b4580f1	0.492152	23.4	discard	CatBoost 2000 iters lr=0.015
+b7f1392	0.507042	26.0	discard	LightGBM 1500 rounds
+1f1ee62	0.510414	21.5	keep	LightGBM DART mode with dropout
+17ea816	0.507252	27.2	discard	DART 800 rounds
+c6f1120	0.488559	13.9	discard	CatBoost depth=6
+694f181	0.510994	20.0	keep	blend ratio 0.4 LGB / 0.6 CB
+702fc0b	0.508765	21.4	discard	blend 0.3/0.7
+02c4974	0.488073	19.8	discard	winsorize 3rd/95th pct
+81d93eb	0.493963	19.5	discard	add feature_fraction_bynode=0.8
+960fb02	0.502430	22.1	discard	gbdt lr=0.02 reg_alpha=0.2 reg_lambda=2.0 1500rds
+265ad75	0.492957	28.0	discard	rank-target CatBoost + rank-based 3-model blend
+5916480	0.507296	25.1	discard	DART lr=0.03 700 rounds
+fe38855	0.511073	30.1	keep	ExtraTrees + rank-based 3-model blend
+af277c4	0.497455	24.6	discard	CatBoost l2_leaf_reg=10
+b225690	0.429001	23.6	discard	ticker-level Bayesian target encoding (leaky)
+1319b86	0.489655	21.5	discard	Yeo-Johnson transform for target
+ef5e879	0.503557	22.0	discard	ExtraTrees 1000 trees depth 12 more regularized
+9a8a5dd	0.489047	37.2	discard	2 CatBoosts + LGB DART log-space blend
+a3a6a8c	0.495904	23.1	discard	inv_peg and ev_rev_per_growth features
+aee7583	0.511865	22.6	keep	blend weights 0.30/0.40/0.30
+5f72769	0.512180	23.0	keep	equal blend weights 1/3 each
+c067957	0.479492	29.1	discard	RandomForest instead of ExtraTrees
+b2445eb	0.514248	27.9	keep	add HistGradientBoosting as 4th model
+fab7e69	0.487731	54.2	discard	Ridge as 5th model (hurt performance)
+e4c24b6	0.503826	170.0	discard	HistGB 1000 iters (too slow and worse)
+d334956	0.487267	47.0	discard	winsorize 2nd/96th pct
+e6f1c04	0.505137	31.7	discard	2nd LightGBM gbdt in 5-model ensemble
+d06f255	0.500840	110.5	discard	CatBoost ordered boosting (slow and worse)
+b39b7b2	0.475045	111.7	discard	cross-sectional percentile ranks within snapshot_date (too many features, slow)
+0f16cff	0.500830	130.6	discard	LightGBM multi-seed averaging 3 seeds (worse and over budget)
+62f0117	0.504911	29.9	discard	weighted rank blend LGB=0.30 CB=0.35 ET=0.15 HGB=0.20
+995c14a	0.501683	92.2	discard	feature selection drop zero-importance features via gbdt
+ff6cfbe	0.470484	87.8	discard	macro regime interactions treasury x vix, treasury x drawdown, dollar x momentum
+4dc1096	0.491959	123.8	discard	CatBoost RMSE loss depth=10 (worse and over budget)
+ca9a871	0.501691	74.5	discard	LightGBM Huber loss instead of regression
+9374643	0.503129	32.5	discard	hybrid blend 50/50 rank-space + log-space averaging
+7c7b623	0.490887	67.5	discard	LightGBM regression_l1 objective pure MAE
+3b1c629	0.000000	0.0	crash	PyTorch MLP 5th model (hung during StandardScaler NaN)
+f0c00be	0.483631	114.5	discard	value x momentum and quality x value interaction features
+b72702c	0.514248	27.4	keep	revert median fill (was hurting perf), restore -999 fill
+9e8b8fc	0.512591	31.3	discard	LightGBM lr=0.03 700 rounds
+0caf533	0.510337	28.5	discard	2nd CatBoost RMSE depth=6 as 5th model
+29676fe	0.504401	29.3	discard	CatBoost 2000 iters lr=0.015
+0cdf8b6	0.476380	24.0	discard	price_range_52w cash_to_debt ma_crossover features (noisy)
+dd4f222	0.514240	26.3	discard	ExtraTrees 1000 trees depth=20 max_features=0.5 (same)
+fc6ae1b	0.501958	23.4	discard	winsorize 4th/96th percentile
+ac536ab	0.509329	21.2	discard	LightGBM DART drop_rate=0.05
+aa2aea3	0.507112	25.1	discard	HistGBR 800 iters lr=0.02 max_bins=255
+980894a	0.497800	22.8	discard	sqrt target transform instead of log1p
+301c903	0.501913	23.4	discard	LightGBM reg_alpha=0.5 reg_lambda=3.0 (too regularized)
+97edfbc	0.525394	22.5	keep	add KNN regressor k=50 as 5th model (+0.011)
+31be122	0.527862	22.8	keep	KNN k=30 (+0.002)
+35df5bd	0.529566	24.0	keep	KNN k=20 (+0.002)
+c8588b4	0.529689	23.8	keep	KNN k=15 (+0.0001)
+33f2280	0.528909	24.0	discard	KNN k=10 (worse than k=15)
+b42bfaf	0.531247	22.1	keep	remove ExtraTrees, keep LGB+CB+KNN+HGB (+0.002)
+98cc723	0.529689	23.1	discard	5-model LGB+CB+ET+KNN+HGB (ET dilutes KNN)
+918b956	0.530351	19.2	discard	3-model LGB+CB+KNN (HGB helps slightly)
+f79779c	0.533773	22.1	keep	add 2nd KNN k=100 for broader neighborhood (+0.003)
+291384c	0.518589	22.4	discard	3rd KNN k=300 (too broad, dilutes)
+5a5b44a	0.536212	22.4	keep	KNN2 uniform weights (+0.002)
+e7e7710	0.535714	22.4	discard	KNN1 uniform weights (distance better for k=15)
+1784a42	0.530720	22.3	discard	KNN2 k=50 (k=100 better)
+c6309d5	0.530055	22.6	discard	KNN2 k=150
+e01884e	0.525879	22.6	discard	upweight KNN 2x (equal better)
+2316cee	0.518339	26.0	discard	SVR RBF kernel as 6th model (hurts)
+c62384e	0.517586	21.0	discard	remove momentum_reversal and dist_high_vol_ratio (they help)
+c418e83	0.534645	23.5	discard	KNN on raw winsorized target (log better)
+df92069	0.464920	22.4	discard	RobustScaler for KNN (much worse)
+57eb7b1	0.529303	22.0	discard	3rd KNN k=40 (too many KNNs dilute trees)
+1f60e16	0.510564	29.4	discard	cross-sectional percentile ranks within snapshot_date
+13bb5ea	0.501331	169.2	discard	stacking Ridge meta-learner on 5-fold OOF (slow + worse)
+5be8871	0.524128	31.8	discard	weighted rank blend boosters 0.3 each
+7dc9af3	0.524507	29.5	discard	LightGBM huber loss delta=0.5
+b873596	0.500702	30.1	discard	sector target encoding from train set
+2266979	0.526107	26.0	discard	KNN on rank target instead of log target
+ff190f3	0.000000	0.0	crash	LambdaRank group too large for 15K rows
+224d0aa	0.522002	33.5	discard	2nd LightGBM gbdt lr=0.02 1000rds 6th model
+c9577f3	0.530351	19.5	discard	3-model blend LGB+CB+KNN15 only
+8d67f7e	0.519925	26.2	discard	CatBoost quantile 75th pct loss
+429a29d	0.515202	50.8	discard	3 LGB DART different seeds dilutes ensemble
+2817c76	0.504777	31.6	discard	QoQ lag features for fundamentals (noisy)
+b82d361	0.000000	0.0	crash	PyTorch MLP 100 epochs too slow on CPU
+small_mlp	0.000000	0.0	crash	small MLP 15 epochs still too slow on CPU
+b29fae2	0.506700	25.0	discard	winsorize 2nd/98th pct (5th/95th better)
+e86a6bd	0.511011	25.9	discard	feature selection drop zero-importance (hurts other models)
+a4c0bf8	0.526950	34.9	discard	AdaBoost instead of BaggingRegressor
+d99eb39	0.520050	39.0	discard	LGB DART lr=0.03 1000 rounds
+6b342c5	0.524484	26.2	discard	z-scored rank blend
+b836f41	0.511253	41.7	discard	CatBoost depth=10 iter=2000 lr=0.015 l2=8
+473b044	0.504684	27.4	discard	treasury_x_pe beta_x_ret6m smallcap_x_value interactions
+edad739	0.526012	19.3	discard	LGB gbdt instead of DART (DART better)
+1611158	0.526513	26.6	discard	KNN1 cosine distance
+678c17d	0.507866	27.2	discard	sqrt target transform (log better)
+6f567df	0.517163	25.2	discard	CatBoost RMSE SymmetricTree (MAE better)

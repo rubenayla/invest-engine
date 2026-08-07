@@ -1,0 +1,42 @@
+
+name: "sp500_full_screen"
+description: "A screen of the all S&P 500 companies."
+
+universe:
+  pre_screening_universe: "sp500"
+  region: "US"
+  min_market_cap: 100  # $100M minimum
+  # exclude_sectors: 
+    # - "Real Estate"
+    # - "Utilities"  # Often regulated, different dynamics
+
+quality:
+  min_roic: 0.08        # 8% minimum ROIC
+  min_roe: 0.10         # 10% minimum ROE
+  min_current_ratio: 1.0 # Minimum liquidity
+  max_debt_equity: 2.0   # Maximum 200% debt/equity
+
+value:
+  max_pe: 35            # Maximum P/E ratio
+  max_pb: 10           # Maximum P/B ratio
+  max_ev_ebitda: 20     # Maximum EV/EBITDA
+
+growth:
+  min_revenue_growth: -0.05  # Allow slight decline
+  min_earnings_growth: -0.05 # Allow slight decline
+
+risk:
+  max_beta: 1.5         # Not too volatile
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025  # 2.5%
+  rim_years: 10
+
+max_results: 503  # Full S&P 500 universe
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

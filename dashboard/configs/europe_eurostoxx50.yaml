@@ -1,0 +1,106 @@
+# Euro Stoxx 50 - European Blue Chip Stocks
+# Market: Multiple European exchanges
+# Currency: EUR (mostly)
+# Last updated: 2025-01-02
+
+name: "euro_stoxx50_screen"
+description: "Euro Stoxx 50 index components - Eurozone's leading blue-chip index"
+
+universe:
+  region: "EU"
+  min_market_cap: 10000  # $10B minimum (USD millions)
+  custom_tickers:
+    # France (Paris - .PA)
+    - 'MC.PA'       # LVMH
+    - 'OR.PA'       # L'Oréal
+    - 'SAN.PA'      # Sanofi
+    - 'TTE.PA'      # TotalEnergies
+    - 'AI.PA'       # Air Liquide
+    - 'SU.PA'       # Schneider Electric
+    - 'BNP.PA'      # BNP Paribas
+    - 'RMS.PA'      # Hermès
+    - 'CS.PA'       # AXA
+    - 'DG.PA'       # Vinci
+    - 'SAF.PA'      # Safran
+    - 'EL.PA'       # EssilorLuxottica
+    - 'DSY.PA'      # Dassault Systèmes
+    - 'CA.PA'       # Carrefour
+    - 'ORA.PA'      # Orange
+    - 'EN.PA'       # Bouygues
+    - 'VIE.PA'      # Veolia
+    - 'SGO.PA'      # Saint-Gobain
+    - 'KER.PA'      # Kering
+    - 'STLAM.PA'    # Stellantis (alternative listing)
+
+    # Germany (Deutsche Börse - .DE)
+    - 'SAP.DE'      # SAP
+    - 'SIE.DE'      # Siemens
+    - 'AIR.DE'      # Airbus
+    - 'ALV.DE'      # Allianz
+    - 'BAS.DE'      # BASF
+    - 'MBG.DE'      # Mercedes-Benz
+    - 'VOW3.DE'     # Volkswagen
+    - 'BMW.DE'      # BMW
+    - 'DTE.DE'      # Deutsche Telekom
+    - 'EOAN.DE'     # E.ON
+    - 'MUV2.DE'     # Munich Re
+    - 'ADS.DE'      # Adidas
+    - 'DB1.DE'      # Deutsche Börse
+    - 'IFX.DE'      # Infineon
+    - 'SHL.DE'      # Siemens Healthineers
+    - 'BNR.DE'      # Brenntag
+
+    # Netherlands (Amsterdam - .AS)
+    - 'ASML.AS'     # ASML Holding
+    - 'PHIA.AS'     # Philips
+    - 'INGA.AS'     # ING Group
+    - 'ABN.AS'      # ABN AMRO
+    - 'AD.AS'       # Ahold Delhaize
+    - 'HEIA.AS'     # Heineken
+
+    # Italy (Milan - .MI)
+    - 'ENI.MI'      # Eni
+    - 'ISP.MI'      # Intesa Sanpaolo
+    - 'ENEL.MI'     # Enel
+    - 'G.MI'        # Generali
+    - 'STM.MI'      # STMicroelectronics
+
+    # Spain (Madrid - .MC)
+    - 'SAN.MC'      # Banco Santander
+    - 'BBVA.MC'     # BBVA
+    - 'IBE.MC'      # Iberdrola
+    - 'ITX.MC'      # Inditex
+
+    # Belgium (Brussels - .BR)
+    - 'ABI.BR'      # Anheuser-Busch InBev
+
+quality:
+  min_roic: 0.08
+  min_roe: 0.10
+  min_current_ratio: 1.0
+  max_debt_equity: 2.0
+
+value:
+  max_pe: 35
+  max_pb: 10
+  max_ev_ebitda: 20
+
+growth:
+  min_revenue_growth: -0.05
+  min_earnings_growth: -0.05
+
+risk:
+  max_beta: 1.5
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025
+  rim_years: 10
+
+max_results: 50
+sort_by: "composite_score"
+generate_reports: true
+save_data: true

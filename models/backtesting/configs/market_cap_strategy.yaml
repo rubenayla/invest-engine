@@ -1,0 +1,100 @@
+# Backtesting configuration for Market Cap weighted strategy
+# This strategy simply buys the biggest stocks by market capitalization
+name: market_cap_sp500_backtest
+
+# Backtest period
+start_date: '2020-01-01'
+end_date: '2024-01-01'
+
+# Initial capital
+initial_capital: 100000
+
+# Rebalancing frequency: monthly, quarterly, annually
+rebalance_frequency: quarterly
+
+# Strategy type - IMPORTANT: This selects the MarketCapStrategy
+strategy_type: market_cap
+
+# Investment universe - S&P 500 stocks
+# The strategy will fetch market caps for these and select the biggest
+universe:
+  - AAPL
+  - MSFT
+  - AMZN
+  - NVDA
+  - GOOGL
+  - META
+  - TSLA
+  - BRK-B
+  - JPM
+  - JNJ
+  - V
+  - PG
+  - UNH
+  - MA
+  - HD
+  - DIS
+  - BAC
+  - ABBV
+  - PFE
+  - COST
+  - WMT
+  - CVX
+  - XOM
+  - KO
+  - PEP
+  - TMO
+  - MRK
+  - CSCO
+  - ADBE
+  - ACN
+  - LLY
+  - NKE
+  - MCD
+  - ABT
+  - ORCL
+  - INTC
+  - VZ
+  - CRM
+  - AMD
+  - QCOM
+  - T
+  - CMCSA
+  - NEE
+  - TXN
+  - HON
+  - UPS
+  - PM
+  - RTX
+  - LOW
+  # ETFs for comparison
+  - SPY  # S&P 500 ETF
+  - QQQ  # Nasdaq 100 ETF
+
+# Portfolio constraints
+max_positions: 15
+min_position_size: 0.02  # 2% minimum
+max_position_size: 0.30  # 30% maximum
+
+# Transaction costs
+transaction_cost: 0.001  # 0.1% per trade
+slippage: 0.001  # 0.1% slippage
+
+# Benchmark for comparison
+benchmark: SPY
+
+# Market Cap Strategy specific configuration
+strategy:
+  # Maximum number of positions (top N stocks by market cap)
+  max_positions: 10
+  
+  # Weighting method: 'equal' or 'market_cap'
+  # - equal: Equal weight across selected stocks
+  # - market_cap: Weight proportional to market cap
+  weighting: market_cap
+  
+  # Minimum market cap in billions (filters out smaller companies)
+  min_market_cap: 50  # $50B minimum
+  
+  # Rebalance threshold - only rebalance if weights drift by this amount
+  rebalance_threshold: 0.05  # 5% drift triggers rebalancing

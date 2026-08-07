@@ -1,0 +1,41 @@
+# International Value Stocks Configuration
+# Diversified international value opportunities across major markets
+
+name: "international_value_screen"
+description: "Value opportunities across Japan, Europe, and other international markets"
+
+universe:
+  region: "ALL"
+  market: "international_diversified"
+  min_market_cap: 2000  # $2B minimum (USD millions)
+
+quality:
+  min_roe: 0.08
+  min_roic: 0.06
+  max_debt_equity: 2.0
+  min_current_ratio: 1.0
+
+value:
+  max_pe: 18
+  max_pb: 2.0
+  max_ev_ebitda: 12
+
+growth:
+  min_revenue_growth: 0.01
+  min_earnings_growth: 0.0
+
+risk:
+  max_beta: 1.8
+  cyclical_adjustment: true
+
+valuation:
+  models: ["dcf", "rim"]
+  scenarios: ["bear", "base", "bull"]
+  dcf_years: 10
+  terminal_growth_rate: 0.025
+  rim_years: 10
+
+max_results: 20
+sort_by: "composite_score"
+generate_reports: true
+save_data: true
