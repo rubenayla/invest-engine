@@ -24,8 +24,8 @@ sys.path.insert(0, str(REPO_ROOT / 'src'))
 from invest.config.logging_config import setup_logging
 
 
-def ensure_db_tunnel(host: str = 'localhost', port: int = 5433, ssh_alias: str = 'hetzner-db') -> None:
-    """Open SSH tunnel to Hetzner Postgres if port 5433 is not already reachable.
+def ensure_db_tunnel(host: str = 'localhost', port: int = 5433, ssh_alias: str = 'y540-ubuntu') -> None:
+    """Open SSH tunnel to y540 Postgres if port 5433 is not already reachable.
 
     The Mac connects to the production Postgres via an SSH tunnel; without it,
     every model script crashes with "Connection refused". Idempotent: no-op if

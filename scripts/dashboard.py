@@ -54,7 +54,7 @@ def load_stocks_from_database() -> dict:
 
     # Get all stocks with current price
     stocks_query = '''
-        SELECT ticker, current_price, long_name, short_name, sector, fetch_timestamp
+        SELECT ticker, current_price, long_name, short_name, sector, fetch_timestamp, currency
         FROM current_stock_data
         WHERE current_price IS NOT NULL
     '''
@@ -69,6 +69,7 @@ def load_stocks_from_database() -> dict:
             'company_name': row['long_name'] or row['short_name'] or ticker,
             'sector': row['sector'],
             'current_price': row['current_price'],
+            'currency': row['currency'] or 'USD',
             'fetch_timestamp': row['fetch_timestamp'],
             'valuations': {}
         }

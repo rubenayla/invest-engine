@@ -488,6 +488,11 @@ class HTMLGenerator:
     def _generate_stock_row(self, ticker: str, stock_data: Dict) -> str:
         """Generate a single stock table row."""
         current_price = stock_data.get("current_price", 0)
+        
+        currency_code = stock_data.get("currency", "USD")
+        symbols = {'EUR': '€', 'USD': '$', 'GBP': '£', 'JPY': '¥', 'CHF': 'Fr.', 'CAD': 'CA$', 'AUD': 'A$'}
+        self.current_currency_sym = symbols.get(currency_code, '$')
+        
         valuations = stock_data.get("valuations", {})
         fetch_ts = stock_data.get("fetch_timestamp", "")
         from datetime import datetime, timezone
@@ -1332,6 +1337,9 @@ class HTMLGenerator:
             for model, val in stock.get('valuations', {}).items():
                 safe_val = {k: v for k, v in val.items() if k != 'details'}
                 if 'details' in val and isinstance(val['details'], dict):
+        cur_sym = getattr(self, 'current_currency_sym', '$')
+        if prefix == "$":
+            prefix = cur_sym
                     safe_val['details'] = val['details']
                 entry['valuations'][model] = safe_val
             safe_data[ticker] = entry
