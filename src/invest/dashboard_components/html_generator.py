@@ -469,7 +469,7 @@ class HTMLGenerator:
                         <th title="Current market price per share">Price</th>
                         <th title="Analysis completion status">Status</th>
                         <th title="AutoResearch - 5-model ensemble peak 2y return prediction (Spearman 0.54)">AutoRes</th>
-                        <th title="LLM Deep Analysis - AI research verdict with news, variant perception, and scenario analysis">LLM</th>
+                        <th class="sort-asc" title="LLM Deep Analysis - AI research verdict with news, variant perception, and scenario analysis. Default sort: BUY &gt; WATCH &gt; PASS, then price at/below entry, then EV vs bear-case loss weighted by conviction">LLM</th>
                         <th title="Signals: insider buys/sells, activist stakes, institutional holders">Signals</th>
                         <th title="Opportunistic GBM 1-year - Peak return prediction within 2 years">GBM Opp 1y</th>
                         <th title="Opportunistic GBM 3-year - Peak return prediction within 3 years">GBM Opp 3y</th>
@@ -732,6 +732,53 @@ class HTMLGenerator:
         except (ValueError, TypeError):
             return ''
 
+    @staticmethod
+    def llm_entry_actionable(valuation: Dict, current_price: float = None):
+        """True when the current price is at or below the LLM entry price,
+        False when above it, None when either number is missing."""
+        details = (valuation or {}).get("details", {}) or {}
+        try:
+            entry = float(details.get("entry_price"))
+            price = float(current_price)
+        except (TypeError, ValueError):
+            return None
+        if entry <= 0 or price <= 0:
+            return None
+        return price <= entry
+
+    @staticmethod
+    def llm_risk_adjusted_score(valuation: Dict, current_price: float = None):
+        """Sort key for the LLM column (higher = better idea to act on now).
+
+        verdict tier (BUY 100 / WATCH 0 / PASS -100)
+        + 50 if the price is at or below the entry price (a BUY that already ran
+          past its entry is a wait, not a buy)
+        + reward/risk: EV% / |bear-case loss%| (bear clamped to at least 10% so a
+          near-zero bear case cannot dominate; ratio capped at 10) x conviction weight.
+        Returns None when there is no LLM analysis.
+        """
+        if not valuation or not valuation.get("fair_value"):
+            return None
+        details = valuation.get("details", {}) or {}
+        verdict = details.get("verdict", "?")
+        ev_pct = details.get("expected_value_pct", 0) or 0
+        conviction = details.get("conviction", "?")
+        scenarios = details.get("scenarios", {}) or {}
+        bear_return = None
+        for name, s in scenarios.items():
+            if isinstance(s, dict) and 'bear' in name.lower():
+                bear_return = s.get('return_pct')
+        conviction_weight = {"HIGH": 1.9, "MEDIUM-HIGH": 1.6, "MEDIUM": 1.3, "LOW": 1.0}.get(
+            str(conviction).upper(), 1.3
+        )
+        if bear_return is not None and bear_return < 0:
+            raw_score = min(ev_pct / max(abs(bear_return), 10.0), 10.0) * conviction_weight
+        else:
+            raw_score = ev_pct * conviction_weight / 100 if ev_pct else 0
+        verdict_tier = {"BUY": 100, "WATCH": 0, "PASS": -100}.get(verdict, -50)
+        actionable_bonus = 50 if HTMLGenerator.llm_entry_actionable(valuation, current_price) else 0
+        return verdict_tier + actionable_bonus + raw_score
+
     def _format_llm_cell(self, valuation: Dict, current_price: float = None, ticker: str = "") -> str:
         """Format LLM deep analysis cell showing verdict, EV%, and entry price. Clickable to open analysis notes."""
         if not valuation or not valuation.get("fair_value"):
@@ -771,28 +818,21 @@ class HTMLGenerator:
         # EV% color
         ev_class = "margin-excellent" if ev_pct > 15 else "margin-good" if ev_pct > 5 else "margin-neutral" if ev_pct > -5 else "margin-poor"
 
-        # Risk-adjusted score: verdict_tier + (EV / |bear_loss| × conviction_weight)
-        # Verdict tier ensures BUY > WATCH > PASS regardless of EV%
-        bear_return = None
-        for name, s in scenarios.items():
-            if isinstance(s, dict) and 'bear' in name.lower():
-                bear_return = s.get('return_pct')
-        conviction_weight = {"HIGH": 1.9, "MEDIUM-HIGH": 1.6, "MEDIUM": 1.3, "LOW": 1.0}.get(
-            str(conviction).upper(), 1.3
-        )
-        if bear_return is not None and bear_return < 0:
-            raw_score = (ev_pct / abs(bear_return)) * conviction_weight
+        risk_adj_score = self.llm_risk_adjusted_score(valuation, current_price)
+        actionable = self.llm_entry_actionable(valuation, current_price)
+        if actionable is True:
+            entry_note = ' <span style="color:#72ca9b;" title="Price at or below entry">&#10003;</span>'
+        elif actionable is False:
+            entry_note = ' <span style="color:#738091;" title="Price above entry">&#8593;</span>'
         else:
-            raw_score = ev_pct * conviction_weight / 100 if ev_pct else 0
-        verdict_tier = {"BUY": 100, "WATCH": 0, "PASS": -100}.get(verdict, -50)
-        risk_adj_score = verdict_tier + raw_score
+            entry_note = ''
 
         return f'''
         <a href="#" onclick="openNotes('{ticker}'); return false;" rel="noopener" style="text-decoration:none; display:block;" title="{html.escape(tooltip)}">
         <div class="valuation-cell" data-sort-value="{risk_adj_score:.4f}" style="cursor:pointer;">
             <div style="background:{badge_bg}; color:{badge_color}; font-weight:700; font-size:13px; padding:2px 8px; border-radius:3px; display:inline-block; font-family:var(--font-mono);">{verdict}</div>
             <div class="margin {ev_class}" style="margin-top:3px;">{ev_pct:+.0f}%</div>
-            <div class="ratio">entry ${entry_price}</div>
+            <div class="ratio">entry ${entry_price}{entry_note}</div>
             {self._format_age_badge(valuation.get('timestamp'))}
         </div>
         </a>'''
@@ -1243,10 +1283,17 @@ class HTMLGenerator:
         return "<br>".join(html_parts)
 
     def _sort_stocks_for_display(self, stocks_data: Dict) -> List[Tuple[str, Dict]]:
-        """Sort stocks for optimal display order."""
+        """Default table order = the LLM column, the same order a click on that
+        header gives: rows with an LLM verdict first, best risk-adjusted score
+        first; rows without one after, by status and then best model margin."""
         def get_sort_key(stock_item):
             ticker, stock_data = stock_item
             status = stock_data.get("status", "pending")
+            valuations = stock_data.get("valuations", {})
+            llm_score = self.llm_risk_adjusted_score(
+                valuations.get("llm_deep_analysis", {}), stock_data.get("current_price")
+            )
+            has_llm = 0 if llm_score is not None else 1
 
             # Status priority (lower = higher priority)
             status_priority = {
@@ -1259,7 +1306,6 @@ class HTMLGenerator:
             }.get(status, 7)
 
             # Best margin of safety for secondary sort
-            valuations = stock_data.get("valuations", {})
             margins = []
             for key, val in valuations.items():
                 # Skip non-dict values like current_price
@@ -1272,7 +1318,7 @@ class HTMLGenerator:
 
             best_margin = max(margins) if margins else -999
 
-            return (status_priority, -best_margin)
+            return (has_llm, -(llm_score or 0), status_priority, -best_margin)
 
         return sorted(stocks_data.items(), key=get_sort_key)
 
@@ -1291,6 +1337,9 @@ class HTMLGenerator:
 
     def _safe_format(self, value: Any, format_str: str = ".2f", placeholder: str = "-", prefix: str = "") -> str:
         """Safely format a numeric value."""
+        cur_sym = getattr(self, 'current_currency_sym', '$')
+        if prefix == "$":
+            prefix = cur_sym
         try:
             if value is None:
                 return placeholder
@@ -1337,9 +1386,6 @@ class HTMLGenerator:
             for model, val in stock.get('valuations', {}).items():
                 safe_val = {k: v for k, v in val.items() if k != 'details'}
                 if 'details' in val and isinstance(val['details'], dict):
-        cur_sym = getattr(self, 'current_currency_sym', '$')
-        if prefix == "$":
-            prefix = cur_sym
                     safe_val['details'] = val['details']
                 entry['valuations'][model] = safe_val
             safe_data[ticker] = entry

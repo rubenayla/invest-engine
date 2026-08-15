@@ -417,68 +417,26 @@ Template:
 
 ## STEP 16: Save to Database
 
-After writing the .md file, save the structured results to the valuation database.
-Run this Python script with the actual values from your analysis:
+After writing the .md file, save the verdict to `valuation_results` (model
+`llm_deep_analysis`). The dashboard's LLM column reads only this row, and its
+default order ranks by it, so a note without this row is invisible there.
 
-```python
-uv run python -c "
-import json
-from datetime import datetime
-from invest.data.db import get_connection
-
-conn = get_connection()
-cur = conn.cursor()
-
-# Map conviction to confidence score
-conviction_map = {'HIGH': 0.9, 'MEDIUM': 0.7, 'LOW': 0.5}
-
-# --- FILL THESE FROM YOUR ANALYSIS ---
-ticker = '{TICKER}'
-current_price = {CURRENT_PRICE}
-verdict = '{BUY/WATCH/PASS}'
-conviction = '{HIGH/MEDIUM/LOW}'
-expected_value_pct = {EXPECTED_VALUE}  # e.g. 36.0 for +36%
-quality_score = {QUALITY_SCORE}  # out of 25
-entry_price = {ENTRY_PRICE}  # your recommended buy price
-thesis_break_price = {THESIS_BREAK_PRICE}  # price where thesis is wrong
-
-# Scenario table values
-bull = {'prob': {BULL_PROB}, 'target': {BULL_TARGET}, 'return_pct': {BULL_RETURN}}
-base = {'prob': {BASE_PROB}, 'target': {BASE_TARGET}, 'return_pct': {BASE_RETURN}}
-bear = {'prob': {BEAR_PROB}, 'target': {BEAR_TARGET}, 'return_pct': {BEAR_RETURN}}
-
-variant_perception = '{ONE_LINE_VARIANT_PERCEPTION}'
-# --- END FILL ---
-
-fair_value = current_price * (1 + expected_value_pct / 100)
-confidence = conviction_map.get(conviction, 0.5)
-suitable = verdict == 'BUY'
-
-details = {
-    'verdict': verdict,
-    'conviction': conviction,
-    'quality_score': quality_score,
-    'expected_value_pct': expected_value_pct,
-    'entry_price': entry_price,
-    'thesis_break_price': thesis_break_price,
-    'variant_perception': variant_perception,
-    'scenarios': {'bull': bull, 'base': base, 'bear': bear},
-}
-
-cur.execute('''INSERT INTO valuation_results
-    (ticker, model_name, timestamp, fair_value, current_price, upside_pct, suitable, confidence, details_json)
-    VALUES (%s, 'llm_deep_analysis', %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (ticker, model_name) DO UPDATE SET
-    timestamp=EXCLUDED.timestamp, fair_value=EXCLUDED.fair_value, current_price=EXCLUDED.current_price,
-    upside_pct=EXCLUDED.upside_pct, suitable=EXCLUDED.suitable, confidence=EXCLUDED.confidence,
-    details_json=EXCLUDED.details_json''',
-    (ticker, datetime.now().isoformat(), fair_value, current_price,
-     expected_value_pct, suitable, confidence, json.dumps(details)))
-conn.commit()
-conn.close()
-print(f'Saved {ticker} llm_deep_analysis: verdict={verdict}, EV={expected_value_pct}%, confidence={confidence}')
-"
+```bash
+uv run python scripts/save_llm_verdict.py {TICKER} --price {CURRENT_PRICE} \
+    --verdict {BUY/WATCH/PASS} --conviction {HIGH/MEDIUM-HIGH/MEDIUM/LOW} \
+    --ev {EXPECTED_VALUE_PCT} --quality {QUALITY_SCORE_OUT_OF_25} \
+    --entry {ENTRY_PRICE} --thesis-break {THESIS_BREAK_PRICE} \
+    --bull {BULL_PROB}:{BULL_TARGET}:{BULL_RETURN_PCT} \
+    --base {BASE_PROB}:{BASE_TARGET}:{BASE_RETURN_PCT} \
+    --bear {BEAR_PROB}:{BEAR_TARGET}:{BEAR_RETURN_PCT} \
+    --variant "{ONE_LINE_VARIANT_PERCEPTION}"
 ```
+
+Probabilities are 0-1 (0.25 for 25%). Add `--dry-run` to see the row first. The DB
+is on y540; on the Mac the script needs the tunnel on localhost:5433
+(`ssh -fN -L 5433:localhost:5432 y540-ubuntu`). If the tunnel cannot be opened, add
+the exact command to `~/vault/finance/invest-analysis/tasks.md` so the row gets
+written when y540 is back — the note alone is not enough.
 
 **This step is MANDATORY.** Every deep analysis must be persisted to the database so the dashboard and other tools can access it.
 
