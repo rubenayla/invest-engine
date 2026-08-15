@@ -18,7 +18,10 @@ Usage:
 
 The DB lives on y540 (see `.agents/deployment.md`); on the Mac the script needs the
 SSH tunnel on localhost:5433 (`scripts/update_all.py` opens it, or
-`ssh -fN -L 5433:localhost:5432 y540-ubuntu`).
+`ssh -fN -L 5433:localhost:5432 y540-ubuntu`). When the DB cannot be reached the row
+is appended to ~/vault/finance/invest-analysis/pending_llm_verdicts.jsonl instead and
+the script exits 0 saying so; `--flush-queue` (no other arguments) writes every
+queued row and empties the file. Nothing is lost when y540 is down.
 """
 
 from __future__ import annotations
@@ -70,6 +73,8 @@ def build_row(a: argparse.Namespace) -> tuple:
     )
 
 
+QUEUE_FILE = Path.home() / "vault" / "finance" / "invest-analysis" / "pending_llm_verdicts.jsonl"
+
 SQL = """INSERT INTO valuation_results
     (ticker, model_name, timestamp, fair_value, current_price, upside_pct, suitable, confidence, details_json)
     VALUES (%s, 'llm_deep_analysis', %s, %s, %s, %s, %s, %s, %s)
@@ -79,7 +84,45 @@ SQL = """INSERT INTO valuation_results
     details_json=EXCLUDED.details_json"""
 
 
+def _connect():
+    from invest.data.db import get_connection
+
+    return get_connection()
+
+
+def write_rows(rows: list) -> None:
+    conn = _connect()
+    try:
+        cur = conn.cursor()
+        for row in rows:
+            cur.execute(SQL, row)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def flush_queue() -> int:
+    if not QUEUE_FILE.exists():
+        print(f"Nothing queued ({QUEUE_FILE} does not exist)")
+        return 0
+    lines = [ln for ln in QUEUE_FILE.read_text().splitlines() if ln.strip()]
+    if not lines:
+        print("Nothing queued")
+        return 0
+    rows = [tuple(json.loads(ln)) for ln in lines]
+    write_rows(rows)
+    QUEUE_FILE.write_text("")
+    for r in rows:
+        print(f"Saved {r[0]} llm_deep_analysis (queued {r[1][:16]})")
+    print(f"Flushed {len(rows)} queued row(s)")
+    return 0
+
+
 def main(argv=None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv == ["--flush-queue"]:
+        return flush_queue()
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("ticker", help="ticker exactly as the note filename, e.g. NRG, 8001.T, KER.PA")
     p.add_argument("--price", type=float, required=True, help="price the analysis used")
@@ -103,15 +146,15 @@ def main(argv=None) -> int:
                           "details": json.loads(row[7])}, indent=2))
         return 0
 
-    from invest.data.db import get_connection
-
-    conn = get_connection()
     try:
-        cur = conn.cursor()
-        cur.execute(SQL, row)
-        conn.commit()
-    finally:
-        conn.close()
+        write_rows([row])
+    except Exception as exc:  # DB unreachable (tunnel down, y540 offline): queue, never lose the row
+        QUEUE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with QUEUE_FILE.open("a") as fh:
+            fh.write(json.dumps(row) + "\n")
+        print(f"DB unreachable ({type(exc).__name__}: {str(exc).strip().splitlines()[0][:120]}). "
+              f"Queued {a.ticker} in {QUEUE_FILE}; run `--flush-queue` when y540 is back.")
+        return 0
     print(f"Saved {a.ticker} llm_deep_analysis: verdict={a.verdict}, EV={a.ev:+.0f}%, "
           f"conviction={a.conviction}, entry={a.entry}")
     return 0

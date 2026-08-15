@@ -434,9 +434,10 @@ uv run python scripts/save_llm_verdict.py {TICKER} --price {CURRENT_PRICE} \
 
 Probabilities are 0-1 (0.25 for 25%). Add `--dry-run` to see the row first. The DB
 is on y540; on the Mac the script needs the tunnel on localhost:5433
-(`ssh -fN -L 5433:localhost:5432 y540-ubuntu`). If the tunnel cannot be opened, add
-the exact command to `~/vault/finance/invest-analysis/tasks.md` so the row gets
-written when y540 is back — the note alone is not enough.
+(`ssh -fN -L 5433:localhost:5432 y540-ubuntu`). If the DB is unreachable the script
+queues the row in `~/vault/finance/invest-analysis/pending_llm_verdicts.jsonl` by
+itself and says so; `uv run python scripts/save_llm_verdict.py --flush-queue` writes
+the queue once y540 is back. Run the command either way — the note alone is not enough.
 
 **This step is MANDATORY.** Every deep analysis must be persisted to the database so the dashboard and other tools can access it.
 
