@@ -53,6 +53,12 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
+        # enablement: turns Pages on for the repo if it is off. Without it this
+        # workflow fails at "Get Pages site failed / HttpError: Not Found" on a
+        # repo where Pages was never enabled in settings — which is how it had
+        # been red since the repo was created.
+        with:
+          enablement: true
 
       - name: Build documentation
         run: |
