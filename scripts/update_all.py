@@ -110,6 +110,9 @@ def main() -> int:
     setup_logging(log_file_path="logs/update_all.log")
     ensure_db_tunnel()
 
+    # Flush any pending LLM verdicts that were queued while the DB was unreachable
+    run_cmd([sys.executable, 'scripts/save_llm_verdict.py', '--flush-queue'], 'Flushing pending LLM verdicts')
+
     parser = argparse.ArgumentParser(
         description='Update data, run predictions, and regenerate the dashboard',
     )
