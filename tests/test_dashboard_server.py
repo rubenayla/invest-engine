@@ -45,7 +45,14 @@ def client():
     # (correct in production, where Cloudflare terminates TLS and the browser
     # always sees https), so over plain http it is never sent back and every
     # post-login request would look anonymous.
-    return TestClient(dashboard_server.app, base_url='https://testserver')
+    #
+    # raise_server_exceptions=False so a handler that fails deeper in the stack
+    # comes back as a 500 response instead of propagating out of the client.
+    # These tests assert on the auth boundary — who is let through — and the
+    # endpoints behind it read PostgreSQL, which CI has no access to. Without
+    # this, "authenticated" and "database is down" both look like a test error.
+    return TestClient(dashboard_server.app, base_url='https://testserver',
+                      raise_server_exceptions=False)
 
 
 # ── The rule itself, no HTTP involved ────────────────────────────────────
@@ -129,8 +136,11 @@ class TestLoginFlow:
         assert client.get('/api/alarms').status_code == 401
 
         assert client.post('/api/login', json={'password': TEST_PASSWORD}).status_code == 200
-        # TestClient keeps the session cookie, so this is now the owner.
-        assert client.get('/api/alarms').status_code != 401
+        # TestClient keeps the session cookie, so this is now the owner. The
+        # endpoint itself needs PostgreSQL, so it answers 200 on a machine with
+        # the database and 500 on one without; either way the request got past
+        # the auth layer, which is the only thing this test is about.
+        assert client.get('/api/alarms').status_code in (200, 500)
 
         assert client.post('/api/logout').status_code == 200
         assert client.get('/api/alarms').status_code == 401

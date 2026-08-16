@@ -6,6 +6,7 @@ They are automatically skipped in CI where no database is available.
 
 import json
 import os
+import sqlite3
 import sys
 import time
 from datetime import datetime
