@@ -1848,6 +1848,10 @@ function renderCards() {
 }
 
 function openNotes(ticker) {
+    if (SERVER_MODE && !AUTHENTICATED) {
+        openLoginModal();
+        return;
+    }
     window.open('/api/notes/' + ticker, '_blank');
 }
 
@@ -2661,6 +2665,10 @@ renderCards();
 
         function openNotes(ticker) {
             if (SERVER_MODE) {
+                if (!AUTHENTICATED) {
+                    openLoginModal();
+                    return;
+                }
                 window.open('/api/notes/' + ticker, '_blank');
             } else {
                 window.open('../notes/companies/' + ticker + '.md', '_blank');

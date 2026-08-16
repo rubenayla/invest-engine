@@ -70,3 +70,11 @@ def test_llm_cell_marks_entry_state(tmp_path):
     assert "Price at or below entry" in below
     assert "Price above entry" in above
     assert 'data-sort-value="' in below
+
+
+def test_server_notes_prompt_for_login_before_opening_private_route():
+    javascript = HTMLGenerator()._get_javascript()
+
+    assert "if (!AUTHENTICATED)" in javascript
+    assert "openLoginModal();" in javascript
+    assert "window.open('/api/notes/' + ticker, '_blank');" in javascript
