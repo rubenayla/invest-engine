@@ -32,3 +32,15 @@ class TestPublicDashboard:
 
     def test_login_route_is_removed(self, client):
         assert client.post('/api/login', json={'password': 'anything'}).status_code == 404
+
+    def test_notes_follow_browser_color_scheme(self, client, monkeypatch, tmp_path):
+        (tmp_path / 'CRON.md').write_text('# Cronos Group', encoding='utf-8')
+        monkeypatch.setattr(dashboard_server, 'NOTES_DIR', tmp_path)
+
+        response = client.get('/api/notes/CRON')
+
+        assert response.status_code == 200
+        assert "color-scheme: light dark" in response.text
+        assert "@media (prefers-color-scheme: dark)" in response.text
+        assert "--background:#fff" in response.text
+        assert "--background:#0d1117" in response.text
