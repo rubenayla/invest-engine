@@ -48,13 +48,6 @@ class HTMLGenerator:
         """
         last_updated = metadata.get("last_updated", "Never") if metadata else "Never"
         server_mode = metadata.get("server_mode", False) if metadata else False
-        # Anonymous visitors get a read-only page: no write controls, and none of
-        # the load-time /api/alarms calls that would 401. Default False so a
-        # caller that forgets to pass it gets the safe view, not the private one.
-        authenticated = metadata.get("authenticated", False) if metadata else False
-        # Controls that only make sense for the owner. Hidden rather than disabled
-        # so someone sent the link sees a clean dashboard, not a row of dead buttons.
-        owner_only = "" if (server_mode and authenticated) else "display:none"
 
         # Generate main content sections
         summary_html = self._generate_summary_section(stocks_data)
@@ -89,9 +82,7 @@ class HTMLGenerator:
                     <a href="/feed" class="btn btn-docs">Feed</a>
                     <a href="https://rubenayla.github.io/invest/models/" target="_blank" rel="noopener noreferrer" class="btn btn-docs">Model Docs</a>
                     <button onclick="exportToCSV()" class="btn btn-export">Export CSV</button>
-                    <button onclick="openReminderModal()" class="btn btn-update" style="{owner_only}">Reminders</button>
-                    <button onclick="openLoginModal()" class="btn btn-docs" style="{'' if (server_mode and not authenticated) else 'display:none'}">Sign in</button>
-                    <button onclick="doLogout()" class="btn btn-docs" style="{owner_only}">Sign out</button>
+                    <button onclick="openReminderModal()" class="btn btn-update">Reminders</button>
                 </div>
             </div>
         </header>
@@ -127,8 +118,8 @@ class HTMLGenerator:
             </div>
             <div class="controls-right">
                 <div id="updateStatus" class="update-status"></div>
-                <button id="updateButton" onclick="triggerUpdate()" class="btn btn-update" style="{owner_only}" title="Full refresh: prices, financials, statements, insider trades, activist stakes, institutional holdings. Data only — ML models run locally on Mac.">Update Data</button>
-                <button id="liteUpdateButton" onclick="triggerUpdate(true)" class="btn btn-lite-update" style="{owner_only}" title="Fast refresh: prices &amp; key metrics only. Preserves existing financial statements.">Lite Update</button>
+                <button id="updateButton" onclick="triggerUpdate()" class="btn btn-update" title="Full refresh: prices, financials, statements, insider trades, activist stakes, institutional holdings. Data only — ML models run locally on Mac.">Update Data</button>
+                <button id="liteUpdateButton" onclick="triggerUpdate(true)" class="btn btn-lite-update" title="Fast refresh: prices &amp; key metrics only. Preserves existing financial statements.">Lite Update</button>
                 <button id="cancelButton" onclick="cancelUpdate()" class="btn btn-cancel" style="display:none;">Cancel</button>
             </div>
         </div>
@@ -210,27 +201,8 @@ class HTMLGenerator:
       <div id="alarmPanelList" class="alarm-panel-list"></div>
     </div>
 
-    <!-- Login modal. Reuses the existing .modal-overlay / .modal-form styling, so
-         it needs no new CSS. It exists so the browser never has to show its own
-         native credentials dialog, which is what a WWW-Authenticate header
-         triggers and which appeared over the page for every anonymous visitor. -->
-    <div id="loginModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeLoginModal()">
-      <div class="modal-content">
-        <h3>Sign in</h3>
-        <div class="modal-form">
-          <input type="password" id="loginPassword" placeholder="Password" onkeydown="if(event.key==='Enter')submitLogin()">
-          <div id="loginError" style="color:#e57373;font-size:0.85em;display:none;"></div>
-          <div style="display:flex;gap:8px;justify-content:flex-end;">
-            <button onclick="closeLoginModal()" class="btn btn-docs">Cancel</button>
-            <button onclick="submitLogin()" class="btn btn-update">Sign in</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <script>
         const SERVER_MODE = {'true' if server_mode else 'false'};
-        const AUTHENTICATED = {'true' if authenticated else 'false'};
         const INITIAL_HEALTH = {health_json};
         const INITIAL_UPDATE_STATUS = {update_status_json};
         {self._get_javascript()}
@@ -1848,10 +1820,6 @@ function renderCards() {
 }
 
 function openNotes(ticker) {
-    if (SERVER_MODE && !AUTHENTICATED) {
-        openLoginModal();
-        return;
-    }
     window.open('/api/notes/' + ticker, '_blank');
 }
 
@@ -2665,10 +2633,6 @@ renderCards();
 
         function openNotes(ticker) {
             if (SERVER_MODE) {
-                if (!AUTHENTICATED) {
-                    openLoginModal();
-                    return;
-                }
                 window.open('/api/notes/' + ticker, '_blank');
             } else {
                 window.open('../notes/companies/' + ticker + '.md', '_blank');
@@ -3162,56 +3126,10 @@ renderCards();
             .catch(() => {});
         }
 
-        // Init alarms on page load
-        // AUTHENTICATED, not just SERVER_MODE: these hit /api/alarms, which is
-        // private. Firing them anonymously returned 401 and — while nginx still
-        // sent WWW-Authenticate — made the browser show its own sign-in dialog
-        // over the page for every visitor. Do not relax this back to SERVER_MODE.
-        if (SERVER_MODE && AUTHENTICATED) {
+        // Init alarms on page load.
+        if (SERVER_MODE) {
             refreshAlarmBadge();
             setInterval(checkTriggeredAlarms, 30000);
-        }
-
-        // ── Login ───────────────────────────────────────────────────────
-        // In-page login, so the browser never shows its native credentials
-        // dialog. The server returns a plain JSON 401 with no WWW-Authenticate
-        // header precisely so this can handle it instead.
-        function openLoginModal() {
-            document.getElementById('loginError').style.display = 'none';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginModal').style.display = 'flex';
-            document.getElementById('loginPassword').focus();
-        }
-        function closeLoginModal() {
-            document.getElementById('loginModal').style.display = 'none';
-        }
-        function submitLogin() {
-            const pw = document.getElementById('loginPassword').value;
-            const err = document.getElementById('loginError');
-            fetch('/api/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({password: pw})
-            })
-            .then(r => {
-                if (r.ok) {
-                    // Reload so the server re-renders with the owner controls
-                    // visible, rather than trying to toggle them all in JS.
-                    location.reload();
-                } else {
-                    err.textContent = 'Incorrect password';
-                    err.style.display = 'block';
-                }
-            })
-            .catch(() => {
-                err.textContent = 'Could not reach the server';
-                err.style.display = 'block';
-            });
-        }
-        function doLogout() {
-            fetch('/api/logout', {method: 'POST'})
-                .then(() => location.reload())
-                .catch(() => location.reload());
         }
 
         // ── Notification Bar ────────────────────────────────────────────
@@ -3365,7 +3283,7 @@ renderCards();
         // Init notifications on page load
         // Same reason as the alarm badge above: this fetches /api/alarms/triggered
         // and /api/reminders/due, both private.
-        if (SERVER_MODE && AUTHENTICATED) {
+        if (SERVER_MODE) {
             refreshNotificationBar();
             setInterval(refreshNotificationBar, 60000);
         }

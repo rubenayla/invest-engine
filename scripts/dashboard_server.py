@@ -26,9 +26,6 @@ from pathlib import Path
 
 import uvicorn
 from starlette.applications import Starlette
-from starlette.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from starlette.routing import Route
@@ -39,15 +36,6 @@ LOG_PATH = REPO_ROOT / "logs" / "update_server.log"
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from invest.data.db import get_connection
-from invest.dashboard_auth import (
-    SESSION_KEY,
-    SESSION_MAX_AGE,
-    get_password_hash,
-    get_session_secret,
-    is_authenticated,
-    requires_auth,
-    verify_password,
-)
 
 logger = logging.getLogger("dashboard_server")
 
@@ -485,10 +473,6 @@ async def index(request: Request) -> HTMLResponse:
         "server_mode": True,
         "health": health,
         "update_status": update_manager.status_dict,
-        # Drives which controls the page renders and whether it fires its
-        # load-time /api/alarms calls. Anonymous visitors get a read-only page
-        # and no requests that would 401.
-        "authenticated": is_authenticated(request),
     }
     html = generator.generate_dashboard_html(stocks_data, progress_data, metadata)
     return HTMLResponse(html, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
@@ -928,76 +912,10 @@ def _hours_ago(timestamp_str: str | None, now: datetime) -> float | None:
         return None
 
 
-# ── Auth ─────────────────────────────────────────────────────────────────
-
-
-async def api_login(request: Request) -> JSONResponse:
-    """Exchange the password for a session cookie.
-
-    Accepts JSON or a form body so the modal can post either.
-    """
-    password = ""
-    try:
-        body = await request.json()
-        password = (body or {}).get("password", "")
-    except Exception:
-        try:
-            form = await request.form()
-            password = form.get("password", "")
-        except Exception:
-            password = ""
-
-    if not password or not verify_password(password, get_password_hash()):
-        # Deliberately vague, and deliberately no WWW-Authenticate header.
-        logger.warning("Failed dashboard login attempt")
-        return JSONResponse({"error": "Incorrect password"}, status_code=401)
-
-    request.session[SESSION_KEY] = True
-    return JSONResponse({"ok": True})
-
-
-async def api_logout(request: Request) -> JSONResponse:
-    request.session.clear()
-    return JSONResponse({"ok": True})
-
-
-class AuthMiddleware(BaseHTTPMiddleware):
-    """Rejects unauthenticated writes, and reads of the private endpoints.
-
-    The 401 it returns carries **no `WWW-Authenticate` header**, which is the
-    entire reason this exists rather than nginx `auth_basic`: that header is what
-    makes browsers pop their own sign-in dialog over the page. A plain JSON 401
-    lets the page's own JavaScript handle it silently and show the login modal
-    instead.
-    """
-
-    async def dispatch(self, request: Request, call_next):
-        if requires_auth(request.method, request.url.path) and not is_authenticated(request):
-            return JSONResponse({"error": "auth required"}, status_code=401)
-        return await call_next(request)
-
-
 # ── App ──────────────────────────────────────────────────────────────────
 
-# Order matters: SessionMiddleware must wrap AuthMiddleware, or request.session
-# does not exist yet when the auth check runs. Starlette applies these outermost
-# first, so SessionMiddleware is listed first.
 app = Starlette(
-    middleware=[
-        Middleware(
-            SessionMiddleware,
-            secret_key=get_session_secret(),
-            max_age=SESSION_MAX_AGE,
-            same_site="lax",
-            # Cloudflare terminates TLS, so the browser always sees https even
-            # though the tunnel hands plain HTTP to nginx on localhost.
-            https_only=True,
-        ),
-        Middleware(AuthMiddleware),
-    ],
     routes=[
-        Route("/api/login", api_login, methods=["POST"]),
-        Route("/api/logout", api_logout, methods=["POST"]),
         Route("/", index),
         Route("/m", mobile_index),
         Route("/feed", feed_index),
