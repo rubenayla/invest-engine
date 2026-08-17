@@ -63,6 +63,7 @@ class HTMLGenerator:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>Investment Valuation Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1450,6 +1451,25 @@ const INITIAL_DATA = {data_json};
     --font-mono: 'Geist Mono', 'SF Mono', ui-monospace, monospace;
 }
 
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-base: #f6f8fa;
+        --bg-panel: #ffffff;
+        --bg-elevated: #f0f2f5;
+        --bg-hover: #e8eef7;
+        --bg-row-alt: rgba(9,105,218,0.04);
+        --border: rgba(31,35,40,0.18);
+        --border-subtle: rgba(31,35,40,0.10);
+        --border-glow: rgba(9,105,218,0.28);
+        --text-primary: #1f2328;
+        --text-secondary: #57606a;
+        --text-muted: #6e7781;
+        --accent: #0969da;
+        --accent-bright: #0550ae;
+        --accent-dim: rgba(9,105,218,0.10);
+    }
+}
+
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 html {
@@ -1971,6 +1991,25 @@ renderCards();
             --orange-dim: rgba(236,154,60,0.12);
             --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-mono: 'Geist Mono', 'SF Mono', ui-monospace, monospace;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-base: #f6f8fa;
+                --bg-panel: #ffffff;
+                --bg-elevated: #f0f2f5;
+                --bg-hover: #e8eef7;
+                --bg-row-alt: rgba(9,105,218,0.04);
+                --border: rgba(31,35,40,0.18);
+                --border-subtle: rgba(31,35,40,0.10);
+                --border-glow: rgba(9,105,218,0.28);
+                --text-primary: #1f2328;
+                --text-secondary: #57606a;
+                --text-muted: #6e7781;
+                --accent: #0969da;
+                --accent-bright: #0550ae;
+                --accent-dim: rgba(9,105,218,0.10);
+            }
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }

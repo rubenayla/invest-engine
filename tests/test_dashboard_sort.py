@@ -78,3 +78,11 @@ def test_server_notes_open_without_login():
     assert "AUTHENTICATED" not in javascript
     assert "openLoginModal" not in javascript
     assert "window.location.href = '/api/notes/' + ticker;" in javascript
+
+
+def test_dashboard_css_follows_browser_color_scheme():
+    css = HTMLGenerator()._get_css_styles()
+
+    assert '@media (prefers-color-scheme: light)' in css
+    assert '--bg-base: #f6f8fa' in css
+    assert '--bg-base: #111418' in css
