@@ -34,7 +34,10 @@ class TestPublicDashboard:
         assert client.post('/api/login', json={'password': 'anything'}).status_code == 404
 
     def test_notes_follow_browser_color_scheme(self, client, monkeypatch, tmp_path):
-        (tmp_path / 'CRON.md').write_text('# Cronos Group', encoding='utf-8')
+        (tmp_path / 'CRON.md').write_text(
+            '# Cronos Group\n\n| Metric | Value |\n| --- | --- |\n| Revenue | $146.6M |\n',
+            encoding='utf-8',
+        )
         monkeypatch.setattr(dashboard_server, 'NOTES_DIR', tmp_path)
 
         response = client.get('/api/notes/CRON')
@@ -44,3 +47,5 @@ class TestPublicDashboard:
         assert "@media (prefers-color-scheme: dark)" in response.text
         assert "--background:#fff" in response.text
         assert "--background:#0d1117" in response.text
+        assert '<table>' in response.text
+        assert '<td>Revenue</td>' in response.text
