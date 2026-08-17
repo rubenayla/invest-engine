@@ -49,3 +49,5 @@ class TestPublicDashboard:
         assert "--background:#0d1117" in response.text
         assert '<table>' in response.text
         assert '<td>Revenue</td>' in response.text
+        assert "href='/'" in response.text
+        assert 'Back to dashboard' in response.text

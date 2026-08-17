@@ -882,7 +882,9 @@ async def api_notes(request: Request):
         f"th {{ background:var(--surface); font-weight:600; color:var(--strong); }}"
         f"tr:hover {{ background:rgba(88,166,255,0.04); }}"
         f"@media(max-width:700px){{ body {{ padding:24px 18px; font-size:18px; }} }}"
-        f"</style></head><body>{body}</body></html>"
+        f".back-link {{ display:inline-block; margin-bottom:24px; padding:8px 12px; border:1px solid var(--border); border-radius:6px; color:var(--heading); text-decoration:none; font-size:14px; line-height:1.2; }}"
+        f".back-link:hover {{ background:var(--surface); }}"
+        f"</style></head><body><a class='back-link' href='/'>← Back to dashboard</a>{body}</body></html>"
     )
     return HTMLResponse(html)
 

@@ -569,7 +569,7 @@ class HTMLGenerator:
         return f'''
         <tr class="stock-row {new_status}">
             <td class="rank-cell"></td>
-            <td class="ticker-cell"><span class="ticker-trigger" data-ticker="{ticker}" data-price="{current_price or 0}" onclick="toggleKebab(event, this)" title="{company_name}">{ticker} &#8942;</span><div class="kebab-menu"><div class="kebab-label">{company_name}</div><div class="kebab-label" style="color:{updated_color}; padding-top:0;">Data: {updated_str}</div><div class="kebab-label" style="color:{models_color}; padding-top:0;">Models: {models_str}</div><div class="kebab-sep"></div><a class="kebab-item" href="#" onclick="openNotes('{ticker}'); return false;">&#128196; Analysis notes</a><div class="kebab-item" onclick="openAlarmModal('{ticker}', {current_price or 0}); closeAllKebabs();">&#128276; Price alarm</div><a class="kebab-item" href="https://finance.yahoo.com/quote/{ticker}" target="_blank" rel="noopener">&#128200; Yahoo Finance</a></div></td>
+            <td class="ticker-cell"><span class="ticker-trigger" data-ticker="{ticker}" data-price="{current_price or 0}" onclick="toggleKebab(event, this)" title="{company_name}">{ticker} &#8942;</span><a class="notes-link" href="/api/notes/{ticker}" onclick="openNotes('{ticker}'); return false;">&#128196; Notes</a><div class="kebab-menu"><div class="kebab-label">{company_name}</div><div class="kebab-label" style="color:{updated_color}; padding-top:0;">Data: {updated_str}</div><div class="kebab-label" style="color:{models_color}; padding-top:0;">Models: {models_str}</div><div class="kebab-sep"></div><a class="kebab-item" href="#" onclick="openNotes('{ticker}'); return false;">&#128196; Analysis notes</a><div class="kebab-item" onclick="openAlarmModal('{ticker}', {current_price or 0}); closeAllKebabs();">&#128276; Price alarm</div><a class="kebab-item" href="https://finance.yahoo.com/quote/{ticker}" target="_blank" rel="noopener">&#128200; Yahoo Finance</a></div></td>
             <td>{self._safe_format(current_price, prefix="$")}</td>
             <td>{status_html}</td>
             <td>{autoresearch_html}</td>
@@ -1820,7 +1820,7 @@ function renderCards() {
 }
 
 function openNotes(ticker) {
-    window.open('/api/notes/' + ticker, '_blank');
+    window.location.href = '/api/notes/' + ticker;
 }
 
 // ── Pill interaction ──
@@ -2327,6 +2327,13 @@ renderCards();
             user-select: none;
         }
         .ticker-trigger:hover { background: var(--bg-hover, rgba(76,144,240,0.12)); }
+        .notes-link {
+            display: block; width: fit-content; margin: 5px 0 0 6px; padding: 2px 6px;
+            color: var(--accent-bright); background: var(--accent-dim);
+            border: 1px solid var(--border-subtle); border-radius: 4px;
+            font-size: 11px; font-weight: 600; text-decoration: none;
+        }
+        .notes-link:hover { background: var(--bg-hover); border-color: var(--border-glow); }
 
         .stock-row { transition: background 0.1s; }
         .stock-row:nth-child(even) { background: var(--bg-row-alt); }
@@ -2633,9 +2640,9 @@ renderCards();
 
         function openNotes(ticker) {
             if (SERVER_MODE) {
-                window.open('/api/notes/' + ticker, '_blank');
+                window.location.href = '/api/notes/' + ticker;
             } else {
-                window.open('../notes/companies/' + ticker + '.md', '_blank');
+                window.location.href = '../notes/companies/' + ticker + '.md';
             }
         }
 

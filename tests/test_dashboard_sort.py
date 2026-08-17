@@ -77,4 +77,4 @@ def test_server_notes_open_without_login():
 
     assert "AUTHENTICATED" not in javascript
     assert "openLoginModal" not in javascript
-    assert "window.open('/api/notes/' + ticker, '_blank');" in javascript
+    assert "window.location.href = '/api/notes/' + ticker;" in javascript
