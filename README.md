@@ -112,6 +112,9 @@ uv run mkdocs serve
 View your investment analysis in a clean, fast static HTML dashboard:
 
 ```bash
+# Reconstruct historical insider signals from stored Form 4 filings first
+uv run python scripts/backfill_insider_snapshots.py
+
 # Generate/update the dashboard
 uv run python scripts/dashboard.py
 

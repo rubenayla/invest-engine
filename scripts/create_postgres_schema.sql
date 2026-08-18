@@ -246,6 +246,25 @@ CREATE TABLE IF NOT EXISTS scanner_score_history (
     UNIQUE(date, ticker)
 );
 
+CREATE TABLE IF NOT EXISTS insider_signal_history (
+    id SERIAL PRIMARY KEY,
+    date TEXT NOT NULL,
+    ticker TEXT NOT NULL,
+    insider_score DOUBLE PRECISION NOT NULL,
+    buy_count INTEGER NOT NULL DEFAULT 0,
+    sell_count INTEGER NOT NULL DEFAULT 0,
+    net_buy_pct DOUBLE PRECISION,
+    sell_trend DOUBLE PRECISION,
+    buy_trend DOUBLE PRECISION,
+    cluster_score INTEGER NOT NULL DEFAULT 0,
+    dollar_conviction DOUBLE PRECISION NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(date, ticker)
+);
+
+CREATE INDEX IF NOT EXISTS idx_insider_signal_history_ticker_date
+    ON insider_signal_history(ticker, date);
+
 -- ── Macro rates ─────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS macro_rates (

@@ -6,12 +6,13 @@ Stores Form 4 insider transactions and computes aggregate insider signals
 """
 
 import logging
-import psycopg2
-import psycopg2.extensions
-import psycopg2.extras
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
+
+import psycopg2
+import psycopg2.extensions
+import psycopg2.extras
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,27 @@ def ensure_schema(conn) -> None:
             form4_count INTEGER DEFAULT 0,
             status TEXT DEFAULT 'ok'
         )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS insider_signal_history (
+            id SERIAL PRIMARY KEY,
+            date TEXT NOT NULL,
+            ticker TEXT NOT NULL,
+            insider_score REAL NOT NULL,
+            buy_count INTEGER NOT NULL DEFAULT 0,
+            sell_count INTEGER NOT NULL DEFAULT 0,
+            net_buy_pct REAL,
+            sell_trend REAL,
+            buy_trend REAL,
+            cluster_score INTEGER NOT NULL DEFAULT 0,
+            dollar_conviction REAL NOT NULL DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(date, ticker)
+        )
+    """)
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_insider_signal_history_ticker_date
+            ON insider_signal_history(ticker, date)
     """)
     conn.commit()
 
@@ -134,7 +156,7 @@ def _no_insider_data() -> Dict[str, Any]:
     }
 
 
-def _aggregate_insider_rows(rows) -> Dict[str, Any]:
+def _aggregate_insider_rows(rows, now: Optional[datetime] = None) -> Dict[str, Any]:
     """
     Aggregate one ticker's recent open-market rows into a signal dict
     (without the historical sell/buy trends, which the caller fills in).
@@ -143,6 +165,7 @@ def _aggregate_insider_rows(rows) -> Dict[str, Any]:
     transaction_date, reporter_name, is_open_market) ordered by date DESC.
     Assumes `rows` is non-empty.
     """
+    now = now or datetime.utcnow()
     buy_shares = 0.0
     sell_shares = 0.0
     buy_dollars = 0.0
@@ -176,7 +199,7 @@ def _aggregate_insider_rows(rows) -> Dict[str, Any]:
     if last_buy_date:
         try:
             last_dt = datetime.strptime(last_buy_date, "%Y-%m-%d")
-            recency_days = (datetime.utcnow() - last_dt).days
+            recency_days = (now - last_dt).days
         except ValueError:
             pass
 

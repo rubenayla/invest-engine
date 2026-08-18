@@ -775,23 +775,33 @@ async def api_insider_history(request: Request) -> JSONResponse:
         """, (ticker,))
         comp_rows = cursor.fetchall()
 
-        # These are persisted at scan time so the chart reflects the signal that
-        # was available on each day, rather than recalculating today's view of
-        # historical transactions. Keep the established transaction chart
-        # available during a rolling deployment before the scanner migration runs.
+        # Prefer the dedicated reconstructed history. Fall back to scanner rows
+        # while older deployments are being migrated.
         snapshot_rows = []
         try:
             cursor.execute("""
                 SELECT date, insider_score, insider_buy_count, insider_sell_count,
                        insider_net_buy_pct, insider_sell_trend, insider_buy_trend,
                        insider_cluster_score, insider_dollar_conviction
-                FROM scanner_score_history
+                FROM insider_signal_history
                 WHERE ticker = %s AND insider_score IS NOT NULL
                 ORDER BY date
             """, (ticker,))
             snapshot_rows = cursor.fetchall()
         except Exception:
             conn.rollback()
+            try:
+                cursor.execute("""
+                    SELECT date, insider_score, insider_buy_count, insider_sell_count,
+                           insider_net_buy_pct, insider_sell_trend, insider_buy_trend,
+                           insider_cluster_score, insider_dollar_conviction
+                    FROM scanner_score_history
+                    WHERE ticker = %s AND insider_score IS NOT NULL
+                    ORDER BY date
+                """, (ticker,))
+                snapshot_rows = cursor.fetchall()
+            except Exception:
+                conn.rollback()
     except Exception:
         conn.rollback()
         return JSONResponse({"ok": True, "ticker": ticker, "months": [], "snapshots": []})
