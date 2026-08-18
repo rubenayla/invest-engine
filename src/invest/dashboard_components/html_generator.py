@@ -3345,12 +3345,13 @@ renderCards();
             fetch('/api/insider/' + ticker)
                 .then(r => r.json())
                 .then(data => {
-                    if (!data.months || data.months.length === 0) {
+                    if ((!data.months || data.months.length === 0) &&
+                        (!data.snapshots || data.snapshots.length === 0)) {
                         document.getElementById('insiderChartContainer').innerHTML =
                             '<p style="color:#738091;">No insider transaction data available.</p>';
                         return;
                     }
-                    renderInsiderCharts(data.months, ticker);
+                    renderInsiderCharts(data.months || [], data.snapshots || [], ticker);
                 })
                 .catch(() => {
                     document.getElementById('insiderChartContainer').innerHTML =
@@ -3369,17 +3370,71 @@ renderCards();
             return '$' + v;
         }
 
-        function renderInsiderCharts(months, ticker) {
+        function renderInsiderCharts(months, snapshots, ticker) {
             const n = months.length;
-            if (n === 0) return;
             const recent = months[n - 1];
             const hasComp = months.some(m => m.comp_sells > 0);
-            let subtitle = months[0].month + ' to ' + recent.month + ' \u2022 Open-market transactions only';
+            let subtitle = n ? months[0].month + ' to ' + recent.month + ' \u2022 Open-market transactions only' :
+                'Daily scanner snapshots';
             if (hasComp) subtitle += ' \u2022 Faded = compensation sells (option exercise + tax withholding)';
             document.getElementById('insiderModalSubtitle').textContent = subtitle;
 
             const container = document.getElementById('insiderChartContainer');
-            container.innerHTML = renderDualBarChart(months);
+            let html = '';
+            if (snapshots.length) {
+                html += renderInsiderSignalHistory(snapshots);
+            }
+            if (n) {
+                html += '<h4 style="margin:20px 0 8px; font-size:13px; color:#c9d1d9;">Gross insider transactions</h4>' + renderDualBarChart(months);
+            }
+            container.innerHTML = html;
+        }
+
+        function renderInsiderSignalHistory(snapshots) {
+            const metrics = [
+                ['insider_score', 'Insider score', v => v.toFixed(1), '#ec9a3c'],
+                ['buy_count', 'Gross buys', v => String(v), '#34d399'],
+                ['sell_count', 'Gross sells', v => String(v), '#e76a6e'],
+                ['net_buy_pct', 'Net buy %', v => v.toFixed(1) + '%', '#58a6ff'],
+                ['cluster_score', 'Cluster score', v => String(v), '#a78bfa'],
+                ['dollar_conviction', 'Dollar conviction', fmtDollar, '#63e2c6'],
+                ['sell_trend', 'Sell trend', v => v.toFixed(2) + 'x', '#f0a0a0'],
+                ['buy_trend', 'Buy trend', v => v.toFixed(2) + 'x', '#93c5fd'],
+            ];
+            const cards = metrics.map(([key, label, format, color]) =>
+                renderInsiderMetricCard(snapshots, key, label, format, color)).join('');
+            const first = snapshots[0].date;
+            const last = snapshots[snapshots.length - 1].date;
+            return '<section style="margin-bottom:18px;">' +
+                '<h4 style="margin:0 0 4px; font-size:13px; color:#c9d1d9;">Historical insider signal</h4>' +
+                '<p style="margin:0 0 10px; color:#738091; font-size:11px;">' + first + ' to ' + last +
+                ' · captured when each daily scan ran</p>' +
+                '<div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px;">' + cards +
+                '</div></section>';
+        }
+
+        function renderInsiderMetricCard(snapshots, key, label, format, color) {
+            const values = snapshots.map(s => s[key]).filter(v => v !== null && v !== undefined);
+            if (!values.length) return '';
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const span = max - min || 1;
+            const W = 240, H = 52, pad = 4;
+            const points = snapshots.map((s, index) => {
+                const value = s[key];
+                if (value === null || value === undefined) return null;
+                const x = pad + index * (W - pad * 2) / Math.max(1, snapshots.length - 1);
+                const y = H - pad - (value - min) / span * (H - pad * 2);
+                return x.toFixed(1) + ',' + y.toFixed(1);
+            }).filter(Boolean).join(' ');
+            const latest = values[values.length - 1];
+            return '<div style="border:1px solid #2a3040; border-radius:4px; padding:8px; min-width:0;">' +
+                '<div style="display:flex; justify-content:space-between; gap:8px; font-size:11px;">' +
+                '<span style="color:#a0aec0;">' + label + '</span><strong style="color:' + color + ';">' + format(latest) + '</strong></div>' +
+                '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="52" preserveAspectRatio="none" aria-label="' + label + ' history">' +
+                '<line x1="0" y1="26" x2="' + W + '" y2="26" stroke="#2a3040" stroke-width="1"/>' +
+                '<polyline points="' + points + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+                '</svg></div>';
         }
 
         function renderDualBarChart(months) {
@@ -3411,12 +3466,12 @@ renderCards();
             const hasComp = months.some(m => (m.comp_sells || 0) > 0);
             const legY = 10;
             svg += '<rect x="' + padL + '" y="' + (legY-4) + '" width="8" height="8" fill="#34d399" rx="1"/>';
-            svg += '<text x="' + (padL+11) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Buys</text>';
-            svg += '<rect x="' + (padL+42) + '" y="' + (legY-4) + '" width="8" height="8" fill="#e76a6e" rx="1"/>';
-            svg += '<text x="' + (padL+53) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Sells</text>';
+            svg += '<text x="' + (padL+11) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Gross buys</text>';
+            svg += '<rect x="' + (padL+96) + '" y="' + (legY-4) + '" width="8" height="8" fill="#e76a6e" rx="1"/>';
+            svg += '<text x="' + (padL+107) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Gross sells</text>';
             if (hasComp) {
-                svg += '<rect x="' + (padL+88) + '" y="' + (legY-4) + '" width="8" height="8" fill="#e76a6e" rx="1" opacity="0.3"/>';
-                svg += '<text x="' + (padL+99) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Comp (vesting)</text>';
+                svg += '<rect x="' + (padL+184) + '" y="' + (legY-4) + '" width="8" height="8" fill="#e76a6e" rx="1" opacity="0.3"/>';
+                svg += '<text x="' + (padL+195) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Comp (vesting)</text>';
             }
 
             // Grid lines
@@ -3510,9 +3565,9 @@ renderCards();
 
             // Legend
             svg += '<rect x="' + padL + '" y="' + (H - 14) + '" width="8" height="8" fill="#34d399" rx="1"/>';
-            svg += '<text x="' + (padL + 11) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace">Net count</text>';
+            svg += '<text x="' + (padL + 11) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace">Gross count</text>';
             svg += '<rect x="' + (padL + 80) + '" y="' + (H - 14) + '" width="8" height="8" fill="#63e2c6" rx="1" opacity="0.7"/>';
-            svg += '<text x="' + (padL + 91) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace">Net $ volume</text>';
+            svg += '<text x="' + (padL + 101) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace">Gross $ volume</text>';
             svg += '<text x="' + (padL + Math.max(chartW, totalW) + 4) + '" y="' + (midY + 4) +
                    '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">$0</text>';
 

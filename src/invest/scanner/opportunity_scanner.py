@@ -12,13 +12,12 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from ..data.stock_data_reader import StockDataReader
-from .scoring_engine import ScoringEngine, OpportunityScore
-from .threshold_manager import ThresholdManager
+from .scoring_engine import OpportunityScore, ScoringEngine
 from .telegram_notifier import TelegramNotifier
-
+from .threshold_manager import ThresholdManager
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +143,11 @@ class OpportunityScanner:
                     s.value_score,
                     s.growth_score,
                     s.risk_score,
-                    s.catalyst_score
+                    s.catalyst_score,
+                    {
+                        **s.insider_signal,
+                        'score': s.component_details.get('catalyst', {}).get('insider', {}).get('score'),
+                    },
                 )
                 for s in all_scores
             ]

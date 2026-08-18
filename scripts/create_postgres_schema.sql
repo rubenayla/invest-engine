@@ -234,6 +234,14 @@ CREATE TABLE IF NOT EXISTS scanner_score_history (
     growth_score DOUBLE PRECISION,
     risk_score DOUBLE PRECISION,
     catalyst_score DOUBLE PRECISION,
+    insider_score DOUBLE PRECISION,
+    insider_buy_count INTEGER,
+    insider_sell_count INTEGER,
+    insider_net_buy_pct DOUBLE PRECISION,
+    insider_sell_trend DOUBLE PRECISION,
+    insider_buy_trend DOUBLE PRECISION,
+    insider_cluster_score INTEGER,
+    insider_dollar_conviction DOUBLE PRECISION,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(date, ticker)
 );

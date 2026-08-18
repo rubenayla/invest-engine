@@ -8,7 +8,7 @@ The scoring formula never changes - only "how good does an opportunity need to b
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from invest.data.db import get_connection
 
@@ -86,10 +86,33 @@ class ThresholdManager:
                 growth_score REAL,
                 risk_score REAL,
                 catalyst_score REAL,
+                insider_score REAL,
+                insider_buy_count INTEGER,
+                insider_sell_count INTEGER,
+                insider_net_buy_pct REAL,
+                insider_sell_trend REAL,
+                insider_buy_trend REAL,
+                insider_cluster_score INTEGER,
+                insider_dollar_conviction REAL,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(date, ticker)
             )
         ''')
+
+        # Existing installations predate the insider snapshot columns.
+        for column, column_type in (
+            ('insider_score', 'REAL'),
+            ('insider_buy_count', 'INTEGER'),
+            ('insider_sell_count', 'INTEGER'),
+            ('insider_net_buy_pct', 'REAL'),
+            ('insider_sell_trend', 'REAL'),
+            ('insider_buy_trend', 'REAL'),
+            ('insider_cluster_score', 'INTEGER'),
+            ('insider_dollar_conviction', 'REAL'),
+        ):
+            cursor.execute(
+                f'ALTER TABLE scanner_score_history ADD COLUMN IF NOT EXISTS {column} {column_type}'
+            )
 
         # Create indexes
         cursor.execute('''
@@ -291,7 +314,7 @@ class ThresholdManager:
     def record_scores(
         self,
         date: str,
-        scores: List[Tuple[str, float, float, float, float, float, float]]
+        scores: List[Tuple[str, float, float, float, float, float, float, Dict[str, Any]]]
     ) -> None:
         """
         Record all daily scores to history.
@@ -301,25 +324,44 @@ class ThresholdManager:
         date : str
             Date string (YYYY-MM-DD)
         scores : list
-            List of (ticker, opportunity, quality, value, growth, risk, catalyst) tuples
+            List of (ticker, opportunity, quality, value, growth, risk, catalyst,
+            insider snapshot) tuples. The insider snapshot is the raw signal plus
+            its calculated score for the day's scan.
         """
         conn = get_connection()
         cursor = conn.cursor()
 
         for s in scores:
+            ticker, opportunity, quality, value, growth, risk, catalyst, insider = s
             cursor.execute('''
                 INSERT INTO scanner_score_history
                 (date, ticker, opportunity_score, quality_score, value_score,
-                 growth_score, risk_score, catalyst_score)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                 growth_score, risk_score, catalyst_score, insider_score,
+                 insider_buy_count, insider_sell_count, insider_net_buy_pct,
+                 insider_sell_trend, insider_buy_trend, insider_cluster_score,
+                 insider_dollar_conviction)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (date, ticker) DO UPDATE SET
                     opportunity_score = EXCLUDED.opportunity_score,
                     quality_score = EXCLUDED.quality_score,
                     value_score = EXCLUDED.value_score,
                     growth_score = EXCLUDED.growth_score,
                     risk_score = EXCLUDED.risk_score,
-                    catalyst_score = EXCLUDED.catalyst_score
-            ''', (date, *s))
+                    catalyst_score = EXCLUDED.catalyst_score,
+                    insider_score = EXCLUDED.insider_score,
+                    insider_buy_count = EXCLUDED.insider_buy_count,
+                    insider_sell_count = EXCLUDED.insider_sell_count,
+                    insider_net_buy_pct = EXCLUDED.insider_net_buy_pct,
+                    insider_sell_trend = EXCLUDED.insider_sell_trend,
+                    insider_buy_trend = EXCLUDED.insider_buy_trend,
+                    insider_cluster_score = EXCLUDED.insider_cluster_score,
+                    insider_dollar_conviction = EXCLUDED.insider_dollar_conviction
+            ''', (
+                date, ticker, opportunity, quality, value, growth, risk, catalyst,
+                insider.get('score'), insider.get('buy_count'), insider.get('sell_count'),
+                insider.get('net_buy_pct'), insider.get('sell_trend'), insider.get('buy_trend'),
+                insider.get('cluster_score'), insider.get('dollar_conviction'),
+            ))
 
         conn.commit()
         conn.close()

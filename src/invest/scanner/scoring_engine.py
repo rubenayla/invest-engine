@@ -8,7 +8,7 @@ A stock with P/E=19 isn't discarded - it just scores slightly lower than P/E=17.
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from ..data.stock_data_reader import StockDataReader
 from ..valuation.db_utils import get_db_connection, get_latest_predictions
@@ -37,6 +37,7 @@ class OpportunityScore:
     # Supporting data
     key_metrics: Dict[str, Any] = field(default_factory=dict)
     component_details: Dict[str, Any] = field(default_factory=dict)
+    insider_signal: Dict[str, Any] = field(default_factory=dict)
 
 
 class ScoringEngine:
@@ -421,6 +422,7 @@ class ScoringEngine:
         insider = data.get('insider', {})
         if insider.get('has_data'):
             insider_score, insider_details = self._score_insider_activity(insider)
+            insider_details['score'] = round(insider_score, 1)
             scores.append(insider_score)
             details['insider'] = insider_details
 
@@ -722,7 +724,8 @@ class ScoringEngine:
                 'growth': growth_details,
                 'risk': risk_details,
                 'catalyst': catalyst_details,
-            }
+            },
+            insider_signal=data.get('insider', {}),
         )
 
     def score_universe(self, tickers: List[str]) -> List[OpportunityScore]:

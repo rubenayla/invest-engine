@@ -733,7 +733,7 @@ async def api_reminder_delete(request: Request) -> JSONResponse:
 
 
 async def api_insider_history(request: Request) -> JSONResponse:
-    """Return monthly insider buy/sell counts for a ticker (SVG chart data).
+    """Return transaction history and daily insider signal snapshots for a ticker.
 
     Distinguishes compensation sells (same-day option exercise + sell by same
     person) from discretionary open-market sells.
@@ -774,9 +774,27 @@ async def api_insider_history(request: Request) -> JSONResponse:
             ORDER BY month
         """, (ticker,))
         comp_rows = cursor.fetchall()
+
+        # These are persisted at scan time so the chart reflects the signal that
+        # was available on each day, rather than recalculating today's view of
+        # historical transactions. Keep the established transaction chart
+        # available during a rolling deployment before the scanner migration runs.
+        snapshot_rows = []
+        try:
+            cursor.execute("""
+                SELECT date, insider_score, insider_buy_count, insider_sell_count,
+                       insider_net_buy_pct, insider_sell_trend, insider_buy_trend,
+                       insider_cluster_score, insider_dollar_conviction
+                FROM scanner_score_history
+                WHERE ticker = %s AND insider_score IS NOT NULL
+                ORDER BY date
+            """, (ticker,))
+            snapshot_rows = cursor.fetchall()
+        except Exception:
+            conn.rollback()
     except Exception:
         conn.rollback()
-        return JSONResponse({"ok": True, "ticker": ticker, "months": []})
+        return JSONResponse({"ok": True, "ticker": ticker, "months": [], "snapshots": []})
     finally:
         conn.close()
 
@@ -803,10 +821,27 @@ async def api_insider_history(request: Request) -> JSONResponse:
                 month_map[month]["comp_sells"] = comp_map[month][0]
                 month_map[month]["comp_sell_vol"] = comp_map[month][1]
 
+    snapshots = [
+        {
+            "date": date,
+            "insider_score": float(insider_score),
+            "buy_count": buy_count or 0,
+            "sell_count": sell_count or 0,
+            "net_buy_pct": float(net_buy_pct) if net_buy_pct is not None else None,
+            "sell_trend": float(sell_trend) if sell_trend is not None else None,
+            "buy_trend": float(buy_trend) if buy_trend is not None else None,
+            "cluster_score": cluster_score or 0,
+            "dollar_conviction": float(dollar_conviction) if dollar_conviction is not None else 0.0,
+        }
+        for (date, insider_score, buy_count, sell_count, net_buy_pct, sell_trend,
+             buy_trend, cluster_score, dollar_conviction) in snapshot_rows
+    ]
+
     return JSONResponse({
         "ok": True,
         "ticker": ticker,
         "months": list(month_map.values()),
+        "snapshots": snapshots,
     })
 
 
@@ -961,7 +996,7 @@ def main():
 
     display_host = "[::1]" if args.host == "::" else ("127.0.0.1" if args.host == "0.0.0.0" else args.host)
     print(f"\n  Dashboard server starting at http://{display_host}:{args.port}")
-    print(f"  Database: PostgreSQL (invest)\n")
+    print("  Database: PostgreSQL (invest)\n")
 
     # Ensure alarm table exists
     _ensure_alarm_table()
