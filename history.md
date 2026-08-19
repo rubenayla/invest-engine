@@ -16,3 +16,7 @@ The configured PostgreSQL tunnel at `127.0.0.1:5433` accepted connections to `po
 The missing `invest` database was a tunnel-target error, not data loss. `hetzner-db` reaches the Hetzner Partle server, whose PostgreSQL cluster contains `partle` but not `invest`. The investment database is on `y540-ubuntu` at PostgreSQL `localhost:5432`; it is online and contains 422 MB, 109,085 insider transactions, and 120,497 scanner score-history rows as of this check. The correct local tunnel is `ssh -fN -L 5433:localhost:5432 y540-ubuntu`.
 
 Root cause of the wrong diagnosis: the real `hetzner-db` alias was copied from the separate Partle workflow, where it is used to reach Partle's PostgreSQL server. The invest repository already names `y540-ubuntu` as its tunnel alias in `scripts/update_all.py:27` (commit `f5bf756`). The two projects share a machine and port convention, but not the database host.
+
+## 2026-08-19 — Investment dashboard deployment gap
+
+The invest repository's `.github/workflows/ci.yml` contains only a test job. It does not pull code or restart the dashboard on `y540-ubuntu`. The running dashboard server there was started on 2026-08-17 from commit `7e292f3`, while `origin/main` had advanced to `d2e0237`. Partle auto-deploys through its separate `.github/workflows/deploy.yml` and `scripts/ship.sh`; that deployment mechanism is not shared with invest.
