@@ -20,6 +20,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
+from psycopg2.extras import execute_values
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -30,6 +32,14 @@ from invest.data.insider_db import (
     ensure_schema,
 )
 from invest.scanner.scoring_engine import ScoringEngine
+
+
+def _date_only(value: Any) -> str:
+    """Normalize PostgreSQL text/date values to the filing date."""
+    value = str(value)
+    date_str = value[:10]
+    datetime.strptime(date_str, "%Y-%m-%d")
+    return date_str
 
 
 def build_daily_snapshots(
@@ -45,7 +55,9 @@ def build_daily_snapshots(
     by_ticker: dict[str, list[tuple]] = defaultdict(list)
     for ticker, tx_type, shares, price, tx_date, reporter, is_open_market in rows:
         if is_open_market and tx_type in {"P", "S"}:
-            by_ticker[ticker].append((tx_type, shares, price, tx_date, reporter, is_open_market))
+            by_ticker[ticker].append((
+                tx_type, shares, price, _date_only(tx_date), reporter, is_open_market
+            ))
 
     engine = ScoringEngine()
     snapshots: list[dict[str, Any]] = []
@@ -106,27 +118,27 @@ def backfill(tickers: set[str] | None = None, lookback_days: int = 180) -> int:
         if tickers:
             rows = [row for row in rows if row[0] in tickers]
         snapshots = build_daily_snapshots(rows, lookback_days)
-        for snapshot in snapshots:
-            cur.execute("""
-                INSERT INTO insider_signal_history
-                    (date, ticker, insider_score, buy_count, sell_count,
-                     net_buy_pct, sell_trend, buy_trend, cluster_score,
-                     dollar_conviction)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (date, ticker) DO UPDATE SET
-                    insider_score = EXCLUDED.insider_score,
-                    buy_count = EXCLUDED.buy_count,
-                    sell_count = EXCLUDED.sell_count,
-                    net_buy_pct = EXCLUDED.net_buy_pct,
-                    sell_trend = EXCLUDED.sell_trend,
-                    buy_trend = EXCLUDED.buy_trend,
-                    cluster_score = EXCLUDED.cluster_score,
-                    dollar_conviction = EXCLUDED.dollar_conviction
-            """, tuple(snapshot[field] for field in (
+        values = [tuple(snapshot[field] for field in (
                 "date", "ticker", "insider_score", "buy_count", "sell_count",
                 "net_buy_pct", "sell_trend", "buy_trend", "cluster_score",
                 "dollar_conviction",
-            )))
+            )) for snapshot in snapshots]
+        execute_values(cur, """
+            INSERT INTO insider_signal_history
+                (date, ticker, insider_score, buy_count, sell_count,
+                 net_buy_pct, sell_trend, buy_trend, cluster_score,
+                 dollar_conviction)
+            VALUES %s
+            ON CONFLICT (date, ticker) DO UPDATE SET
+                insider_score = EXCLUDED.insider_score,
+                buy_count = EXCLUDED.buy_count,
+                sell_count = EXCLUDED.sell_count,
+                net_buy_pct = EXCLUDED.net_buy_pct,
+                sell_trend = EXCLUDED.sell_trend,
+                buy_trend = EXCLUDED.buy_trend,
+                cluster_score = EXCLUDED.cluster_score,
+                dollar_conviction = EXCLUDED.dollar_conviction
+        """, values, page_size=1000)
         conn.commit()
         return len(snapshots)
     finally:

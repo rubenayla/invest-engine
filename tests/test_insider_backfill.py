@@ -38,3 +38,13 @@ def test_backfill_ignores_non_open_market_form_four_rows():
 
     assert len(snapshots) == 1
     assert snapshots[0]["date"] == "2026-01-02"
+
+
+def test_backfill_normalizes_timestamped_transaction_dates():
+    rows = [
+        ("ACME", "P", 10.0, 100.0, "2026-01-02-05:00", "Alice", 1),
+    ]
+
+    snapshots = build_daily_snapshots(rows)
+
+    assert snapshots[0]["date"] == "2026-01-02"
