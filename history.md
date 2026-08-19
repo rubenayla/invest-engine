@@ -10,3 +10,7 @@
 Added `scripts/backfill_insider_snapshots.py`, which reconstructs one as-of-date insider signal for each ticker and open-market Form 4 transaction date. It writes to the dedicated `insider_signal_history` table so the backfill does not invent mandatory valuation scores in `scanner_score_history`. The dashboard API reads this table and retains a fallback to scanner-captured snapshots.
 
 The configured PostgreSQL tunnel at `127.0.0.1:5433` accepted connections to `postgres`, but the configured `invest` database did not exist. The live backfill and dashboard regeneration remain pending until that database is restored or the connection file is corrected.
+
+## 2026-08-19 — Database location clarified
+
+The missing `invest` database was a tunnel-target error, not data loss. `hetzner-db` reaches the Hetzner Partle server, whose PostgreSQL cluster contains `partle` but not `invest`. The investment database is on `y540-ubuntu` at PostgreSQL `localhost:5432`; it is online and contains 422 MB, 109,085 insider transactions, and 120,497 scanner score-history rows as of this check. The correct local tunnel is `ssh -fN -L 5433:localhost:5432 y540-ubuntu`.
