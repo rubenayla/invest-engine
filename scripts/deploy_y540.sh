@@ -11,6 +11,11 @@ before=$(git rev-parse HEAD)
 git pull --ff-only origin main
 after=$(git rev-parse HEAD)
 
+if [[ -n "${EXPECTED_DEPLOY_SHA:-}" && "$after" != "$EXPECTED_DEPLOY_SHA" ]]; then
+    echo "Remote checkout is $after, expected $EXPECTED_DEPLOY_SHA" >&2
+    exit 1
+fi
+
 echo "Deploying invest from $before to $after"
 
 # Keep the remote environment aligned with the lockfile before restarting the

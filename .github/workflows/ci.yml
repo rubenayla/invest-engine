@@ -3,12 +3,6 @@ name: CI
 on:
   push:
     branches: [main, develop]
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - 'notes/**'
-      - '.agents/**'
-      - '.github/workflows/docs.yml'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -86,4 +80,4 @@ jobs:
             -o ConnectTimeout=30 \
             -o ProxyCommand='cloudflared access ssh --hostname %h' \
             rubenayla@ssh.rubenayla.xyz \
-            'bash -s' < scripts/deploy_y540.sh
+            "EXPECTED_DEPLOY_SHA=$GITHUB_SHA bash -s" < scripts/deploy_y540.sh
