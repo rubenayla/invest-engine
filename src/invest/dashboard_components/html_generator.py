@@ -80,10 +80,8 @@ class HTMLGenerator:
                 <div class="last-updated">Page rendered: <span id="lastUpdated">{last_updated}</span></div>
                 <div class="header-actions">
                     <a id="liveServerLink" href="/" class="btn btn-update" style="{'display:none' if server_mode else ''}">Live Server</a>
-                    <a href="/feed" class="btn btn-docs">Feed</a>
                     <a href="https://rubenayla.github.io/invest/models/" target="_blank" rel="noopener noreferrer" class="btn btn-docs">Model Docs</a>
                     <button onclick="exportToCSV()" class="btn btn-export">Export CSV</button>
-                    <button onclick="openReminderModal()" class="btn btn-update">Reminders</button>
                 </div>
             </div>
         </header>
@@ -96,8 +94,6 @@ class HTMLGenerator:
           </div>
           <div id="notificationList" class="notification-list"></div>
         </div>
-
-        {health_html}
 
         <div class="controls">
             <div class="controls-left">
@@ -133,7 +129,11 @@ class HTMLGenerator:
             <pre id="updateLogContent" class="update-log-content"></pre>
         </div>
 
-        {summary_html}
+        <details class="dashboard-diagnostics">
+            <summary>System status &amp; analysis summary</summary>
+            {health_html}
+            {summary_html}
+        </details>
 
         <div class="stock-analysis">
             <h2>Stock Analysis Results</h2>
@@ -167,23 +167,6 @@ class HTMLGenerator:
         <p id="insiderModalSubtitle" style="color:#738091; font-size:13px; margin:0 0 12px; font-family:Geist Mono,monospace;"></p>
         <div id="insiderChartContainer" style="width:100%; overflow-x:auto;"></div>
         <button onclick="closeInsiderModal()" class="btn" style="margin-top:16px;">Close</button>
-      </div>
-    </div>
-
-    <!-- Reminder Modal -->
-    <div id="reminderModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeReminderModal()">
-      <div class="modal-content" style="min-width:420px; max-width:520px;">
-        <h3>Reminders</h3>
-        <div class="modal-form" style="flex-direction:column; gap:10px;">
-          <input type="text" id="reminderTicker" placeholder="Ticker (optional)" style="width:120px;">
-          <textarea id="reminderMessage" placeholder="Reminder message..." rows="2" style="width:100%; background:var(--bg-card,#161b22); color:var(--text-primary,#e0e6ed); border:1px solid var(--border,#2a3040); border-radius:4px; padding:8px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <input type="date" id="reminderDueDate" style="flex:1;">
-            <button onclick="createReminder()" class="btn btn-update">Add Reminder</button>
-          </div>
-        </div>
-        <div id="reminderList" style="margin-top:16px; max-height:300px; overflow-y:auto;"></div>
-        <button onclick="closeReminderModal()" class="btn" style="margin-top:12px;">Close</button>
       </div>
     </div>
 
@@ -2109,6 +2092,29 @@ renderCards();
             font-family: var(--font-body);
         }
 
+        .dashboard-diagnostics {
+            margin-bottom: 12px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+        }
+        .dashboard-diagnostics > summary {
+            padding: 10px 18px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+        .dashboard-diagnostics > summary:hover { color: var(--accent-bright); }
+        .dashboard-diagnostics[open] > summary { border-bottom: 1px solid var(--border-subtle); }
+        .dashboard-diagnostics .health-panel,
+        .dashboard-diagnostics .analysis-summary {
+            margin: 10px 12px;
+        }
+
         /* ── Health Panel ── */
         .health-panel {
             margin-bottom: 12px;
@@ -2697,20 +2703,6 @@ renderCards();
 
             updateRankNumbers();
 
-            // Mobile: collapsible health panel and summary
-            if (window.innerWidth <= 768) {
-                const hp = document.getElementById('healthPanel');
-                if (hp) {
-                    hp.querySelector('.health-header').addEventListener('click', () => hp.classList.toggle('expanded'));
-                }
-                document.querySelectorAll('.analysis-summary').forEach(el => {
-                    el.addEventListener('click', e => {
-                        if (e.target.closest('.summary-item')) return;
-                        el.classList.toggle('expanded');
-                    });
-                });
-            }
-
             // Universe selector
             document.getElementById('universe').addEventListener('change', function() {
                 const ci = document.getElementById('customTickers');
@@ -3178,158 +3170,43 @@ renderCards();
             setInterval(checkTriggeredAlarms, 30000);
         }
 
-        // ── Notification Bar ────────────────────────────────────────────
-        let _dismissedAlarmIds = new Set();  // session-only dismissals for alarms
-
+        // Show recent triggered alarms in the notification bar.
+        const _dismissedAlarmIds = new Set();
         function refreshNotificationBar() {
             if (!SERVER_MODE) return;
-            const sevenDaysAgo = new Date(Date.now() - 7*86400000).toISOString();
-            Promise.all([
-                fetch('/api/alarms/triggered?since=' + encodeURIComponent(sevenDaysAgo)).then(r => r.json()),
-                fetch('/api/reminders/due').then(r => r.json())
-            ]).then(([alarmData, reminderData]) => {
-                const items = [];
-                (alarmData.triggered || []).forEach(a => {
-                    if (_dismissedAlarmIds.has(a.id)) return;
-                    items.push({
-                        type: 'alarm', id: a.id,
-                        icon: '&#128276;',
-                        html: '<span class="notif-ticker">' + a.ticker + '</span> price went ' +
-                              a.condition + ' $' + Number(a.target_price).toFixed(2),
-                        date: a.triggered_at
-                    });
-                });
-                (reminderData.reminders || []).forEach(r => {
-                    items.push({
-                        type: 'reminder', id: r.id,
-                        icon: '&#128197;',
-                        html: (r.ticker ? '<span class="notif-ticker">' + r.ticker + '</span> ' : '') +
-                              r.message + ' <span style="color:#738091; font-size:11px;">(due ' + r.due_date + ')</span>',
-                        date: r.due_date
-                    });
-                });
-                const bar = document.getElementById('notificationBar');
-                const list = document.getElementById('notificationList');
-                if (items.length === 0) {
-                    bar.style.display = 'none';
-                    return;
-                }
-                bar.style.display = 'block';
-                list.innerHTML = items.map(it => {
-                    const q = String.fromCharCode(39);
-                    return '<div class="notification-item">' +
-                    '<span class="notif-icon">' + it.icon + '</span>' +
-                    '<span class="notif-text">' + it.html + '</span>' +
-                    '<button class="notif-dismiss" onclick="dismissNotification(' + q + it.type + q + ',' + it.id + ')" title="Dismiss">&times;</button>' +
-                    '</div>';
-                }).join('');
-            }).catch(() => {});
+            const since = new Date(Date.now() - 7*86400000).toISOString();
+            fetch('/api/alarms/triggered?since=' + encodeURIComponent(since))
+                .then(r => r.json())
+                .then(data => {
+                    const items = (data.triggered || []).filter(a => !_dismissedAlarmIds.has(a.id));
+                    const bar = document.getElementById('notificationBar');
+                    const list = document.getElementById('notificationList');
+                    if (!items.length) { bar.style.display = 'none'; return; }
+                    bar.style.display = 'block';
+                    list.innerHTML = items.map(a =>
+                        '<div class="notification-item">' +
+                        '<span class="notif-icon">&#128276;</span>' +
+                        '<span class="notif-text"><span class="notif-ticker">' + a.ticker + '</span> price went ' + a.condition + ' $' + Number(a.target_price).toFixed(2) + '</span>' +
+                        '<button class="notif-dismiss" onclick="dismissAlarmNotification(' + a.id + ')" title="Dismiss">&times;</button>' +
+                        '</div>'
+                    ).join('');
+                }).catch(() => {});
         }
-
-        function dismissNotification(type, id) {
-            if (type === 'alarm') {
-                _dismissedAlarmIds.add(id);
-                refreshNotificationBar();
-            } else if (type === 'reminder') {
-                fetch('/api/reminders/' + id + '/acknowledge', { method: 'POST' })
-                    .then(() => refreshNotificationBar())
-                    .catch(() => {});
-            }
+        function dismissAlarmNotification(id) {
+            _dismissedAlarmIds.add(id);
+            refreshNotificationBar();
         }
-
         function dismissAllNotifications() {
-            // Dismiss all visible notifications
-            const items = document.querySelectorAll('.notification-item');
-            const promises = [];
-            items.forEach(item => {
-                const btn = item.querySelector('.notif-dismiss');
-                if (btn) {
-                    const onclick = btn.getAttribute('onclick');
-                    const match = onclick.match(/dismissNotification\('(\w+)',(\d+)\)/);
-                    if (match) {
-                        const [, type, id] = match;
-                        if (type === 'alarm') {
-                            _dismissedAlarmIds.add(Number(id));
-                        } else if (type === 'reminder') {
-                            promises.push(fetch('/api/reminders/' + id + '/acknowledge', { method: 'POST' }));
-                        }
-                    }
-                }
+            document.querySelectorAll('.notification-item .notif-dismiss').forEach(button => {
+                const match = button.getAttribute('onclick').match(/\((\d+)\)/);
+                if (match) _dismissedAlarmIds.add(Number(match[1]));
             });
-            if (promises.length > 0) {
-                Promise.all(promises).then(() => refreshNotificationBar());
-            } else {
-                refreshNotificationBar();
-            }
+            refreshNotificationBar();
         }
 
-        // ── Reminder Modal ──────────────────────────────────────────────
-        function openReminderModal() {
-            document.getElementById('reminderModal').style.display = 'flex';
-            document.getElementById('reminderTicker').value = '';
-            document.getElementById('reminderMessage').value = '';
-            document.getElementById('reminderDueDate').value = '';
-            loadReminderList();
-        }
-        function closeReminderModal() {
-            document.getElementById('reminderModal').style.display = 'none';
-        }
-        function createReminder() {
-            const ticker = document.getElementById('reminderTicker').value.trim();
-            const message = document.getElementById('reminderMessage').value.trim();
-            const due_date = document.getElementById('reminderDueDate').value;
-            if (!message || !due_date) { alert('Message and due date are required'); return; }
-            fetch('/api/reminders', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ ticker: ticker || null, message, due_date })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.ok) {
-                    document.getElementById('reminderMessage').value = '';
-                    loadReminderList();
-                    refreshNotificationBar();
-                } else {
-                    alert(data.error || 'Failed to create reminder');
-                }
-            })
-            .catch(() => alert('Failed to create reminder'));
-        }
-        function loadReminderList() {
-            fetch('/api/reminders')
-            .then(r => r.json())
-            .then(data => {
-                const list = document.getElementById('reminderList');
-                const reminders = data.reminders || [];
-                if (reminders.length === 0) {
-                    list.innerHTML = '<p style="color:#738091; font-size:13px;">No reminders yet.</p>';
-                    return;
-                }
-                list.innerHTML = reminders.map(r => {
-                    const status = r.active ? (r.due_date <= new Date().toISOString().slice(0,10) ? '&#128308;' : '&#9898;') : '&#9989;';
-                    return '<div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border,#2a3040); font-size:13px;">' +
-                        '<span>' + status + '</span>' +
-                        '<span style="flex:1; color:var(--text-primary,#e0e6ed);">' +
-                            (r.ticker ? '<span style="color:#58a6ff; font-weight:600;">' + r.ticker + '</span> ' : '') +
-                            r.message + ' <span style="color:#738091;">(' + r.due_date + ')</span>' +
-                        '</span>' +
-                        '<button onclick="deleteReminder(' + r.id + ')" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:14px;" title="Delete">&times;</button>' +
-                    '</div>';
-                }).join('');
-            })
-            .catch(() => {});
-        }
-        function deleteReminder(id) {
-            fetch('/api/reminders/' + id, { method: 'DELETE' })
-                .then(() => { loadReminderList(); refreshNotificationBar(); })
-                .catch(() => {});
-        }
-
-        // Init notifications on page load
-        // Same reason as the alarm badge above: this fetches /api/alarms/triggered
-        // and /api/reminders/due, both private.
+        // Init alarm notifications on page load.
         if (SERVER_MODE) {
+            checkTriggeredAlarms();
             refreshNotificationBar();
             setInterval(refreshNotificationBar, 60000);
         }
