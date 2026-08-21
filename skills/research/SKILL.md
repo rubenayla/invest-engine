@@ -16,8 +16,11 @@ file and that ticker's forecast history) and the ticker-specific `llm_deep_analy
 database row. Do not edit the shared portfolio watchlist, repo-root `history.md`,
 shared task boards, or another company's files. Return suggested watchlist entries,
 next names to research, and cross-company lessons to the caller for a later synthesis
-pass. This makes several ticker runs safe to execute concurrently without worktrees
-or shared-file coordination.
+pass. Workers also leave git commits and pushes to the coordinator: concurrent writes
+can use separate paths but concurrent git index operations still conflict. The
+coordinator reviews the isolated outputs, then commits and pushes them together. This
+makes several ticker runs safe to execute concurrently without worktrees or shared-file
+coordination.
 
 ---
 
