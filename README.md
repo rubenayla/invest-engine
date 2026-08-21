@@ -178,8 +178,8 @@ All configurations can be customized to match your investment criteria.
 For individual stock deep dives (beyond the scanner), use the analysis methodology:
 
 ```
-/research TICKER                                # Run via Claude command
-.claude/commands/research.md                    # The methodology
+/research TICKER                                # Run with the research workflow
+skills/research/SKILL.md                        # The agent-agnostic methodology
 ```
 
 The command writes one analysis file per company and maintains a ranked
