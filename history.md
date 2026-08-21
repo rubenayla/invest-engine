@@ -24,3 +24,7 @@ The invest repository's `.github/workflows/ci.yml` contains only a test job. It 
 ## 2026-08-21 — Candidates for deeper insider-signal research
 
 The live dashboard screen ranked TSM, ASGN, SPG, VITL, and GEHC among the strongest current insider-buying signals by cluster score. TSM had the highest cluster score (21), but its net-buy percentage was negative and its valuation models disagreed sharply, so it needs verification rather than automatic promotion. ASGN had a strong all-buy signal but the latest activity was 114 days old. GEHC had eight buys, no sells, and about $6.4 million of dollar conviction, while its valuation models also disagreed; GE HealthCare's Q2 2026 release reported 5.7% revenue growth, 11.1% organic orders growth, a $23.9 billion backlog, reaffirmed 2026 guidance, and a CFO transition. Sources: https://investor.tsmc.com/english/quarterly-results/2026/q2 and https://investor.gehealthcare.com/news-releases/news-release-details/ge-healthcare-reports-second-quarter-2026-financial-results.
+
+## 2026-08-21 — Independent four-company research run
+
+Four workers researched TSM, GEHC, ASGN, and SPG independently. Each wrote only its company folder under `~/vault/finance/notes/companies/{TICKER}/` and saved its ticker-specific `llm_deep_analysis` database row. The coordinator committed the outputs after the workers finished; shared watchlists, task boards, and history were unchanged. The research skill now requires this commit boundary because separate file paths do not make concurrent git-index operations safe.
