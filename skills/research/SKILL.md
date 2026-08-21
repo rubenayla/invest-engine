@@ -8,6 +8,17 @@ description: Deep-dive public-equity research for a company ticker, covering the
 Full investment research: news, variant perception, financials, scenarios, verdict.
 Saves to `~/vault/finance/notes/companies/TICKER.md` and `valuation_results` DB (model: `llm_deep_analysis`).
 
+## Parallel research contract
+
+Treat each ticker run as independent by default. A worker may create or update only
+the files inside `~/vault/finance/notes/companies/{TICKER}/` (including the thesis
+file and that ticker's forecast history) and the ticker-specific `llm_deep_analysis`
+database row. Do not edit the shared portfolio watchlist, repo-root `history.md`,
+shared task boards, or another company's files. Return suggested watchlist entries,
+next names to research, and cross-company lessons to the caller for a later synthesis
+pass. This makes several ticker runs safe to execute concurrently without worktrees
+or shared-file coordination.
+
 ---
 
 ## STEP 1: Refresh Stock Data
@@ -448,25 +459,26 @@ the queue once y540 is back. Run the command either way — the note alone is no
 
 ---
 
-## STEP 17: Sync the Watchlist (MANDATORY if the ticker is on it)
+## STEP 17: Prepare Watchlist Suggestions (synthesis pass only)
 
-`~/vault/finance/notes/portfolio/watchlist.md` is a curated summary that goes stale the moment a deep analysis changes a verdict. After saving the note + DB row, check whether `{TICKER}` already has a line in the watchlist:
+Do not edit `~/vault/finance/notes/portfolio/watchlist.md` during an independent
+ticker run. That file is shared state and belongs to the later synthesis pass.
+Instead, return a concise suggested update to the caller after saving the company
+note and database row. Include whether `{TICKER}` should be added or updated, the
+verdict, conviction, quality score, expected value, entry price, thesis-break price,
+and the one-line thesis hook. The synthesis pass must check the existing watchlist
+before applying any update and keep it consistent with the company note.
 
-```bash
-grep -n "companies/{TICKER}.md" ~/vault/finance/notes/portfolio/watchlist.md
-```
-
-- **If a line exists**, update it in place to match the new verdict, conviction, quality score, EV %, and entry/thesis-break prices from this run. Preserve the thesis hook prose; only refresh the data fields and the verdict label. If the verdict flipped (e.g. WATCH→BUY), append a short `*(was WATCH on YYYY-MM-DD — upgraded.)*` note so the change is visible.
-- **If no line exists** but the verdict is BUY or a notable WATCH, add a line in the appropriate section.
-- Bump the file-level `Last updated YYYY-MM-DD` stamp at the top whenever you touch it.
-
-The watchlist must never contradict the company note. A BUY in `~/vault/finance/notes/companies/{TICKER}.md` that still reads WATCH on the watchlist is a bug.
+The watchlist must never contradict the company note. A BUY in the company note that
+still reads WATCH on the watchlist is a synthesis bug.
 
 ---
 
-## STEP 18: Queue whatever this run says to look at next (MANDATORY if the analysis names one)
+## STEP 18: Return next-research suggestions (synthesis pass only)
 
-Deep analysis routinely surfaces a *different* name worth researching — a cheaper peer, a better structural expression of the same idea, a supplier or counterparty that captures more of the economics. Put it in the **`## Next to research`** section at the top of `~/vault/finance/notes/portfolio/watchlist.md`, in this run, as a bullet containing:
+Deep analysis routinely surfaces a different name worth researching. Do not put it
+in the shared watchlist during an independent ticker run. Return the suggestion to
+the caller with:
 
 - **Ticker, company name, and the date it was queued**, plus what queued it (this run, and the thesis file if one applies).
 - **Why it beats or complements the name just analysed** — the specific comparison, with figures.
@@ -474,24 +486,26 @@ Deep analysis routinely surfaces a *different* name worth researching — a chea
 - **What to settle before any position** — the two or three open questions whoever picks it up must answer first.
 - **Any data caveat** the next run would otherwise trip on (broken yfinance fields, structures that make headline ratios meaningless, pre-merger or pre-spin statements).
 
-Record no verdict, EV or quality score here — those appear when `/research` has actually been run on the name and it graduates to a normal watchlist line.
-
-The reason this is a step rather than a habit: a "worth looking at next" left in a thesis file, in repo-root `history.md`, or in chat is invisible to the person choosing what to work on. The top of the watchlist is where that decision gets made.
+Record no verdict, EV or quality score for the suggested name until its own research
+run has actually been completed. The synthesis pass decides which suggestions become
+the next-research queue.
 
 ---
 
-## STEP 19: Repo-root history.md — cross-cutting insights (when the lesson generalizes beyond this one ticker)
+## STEP 19: Return cross-company insights (synthesis pass only)
 
-Where STEP 14 is the per-name track record, repo-root `history.md` is the cross-ticker learning corpus. Append a dated entry whenever this run produced a takeaway a future session would want regardless of the ticker — that includes **first looks at notable names**, **thesis changes**, and **transferable insights** (sector dynamics, valuation methods, market mechanics). It already holds all three kinds; keep it that way.
+Do not edit the repo-root `history.md` during an independent ticker run. Return any
+cross-ticker lesson to the caller for the synthesis pass. Keep the per-company
+forecast record in the company's own folder under STEP 14.
 
-**Log when any of these is true:**
+Return a cross-company lesson when any of these is true:
 - **Thesis change** — verdict flips (BUY ↔ WATCH ↔ PASS), conviction moves a full step, or a prior "Thesis breaks if…" signal actually triggered.
 - **First look** — a name not previously covered, where the analysis surfaced a transferable lesson (how to value the category, a structural trap, a mispricing pattern) — not just "here's another BUY."
 - **Insight** — anything cross-cutting you learned this run that generalizes beyond the one ticker.
 
-**The only thing NOT worth logging:** a routine refresh that leaves the call unchanged AND taught you nothing new. Skipping those keeps the file a learning log, not a changelog. When in doubt, err toward logging — a slightly noisy history beats a lost lesson. The **Lesson** line is always the point: make it transferable to other names.
-
-**Append to the end of repo-root `history.md`** (newest last). Use one of these title conventions so entries pull with a simple grep:
+Do not return a lesson for a routine refresh that leaves the call unchanged and taught
+nothing new. When returning a lesson, use one of these title conventions so the
+synthesis pass can append it consistently:
 
 ```markdown
 ## YYYY-MM-DD — Thesis change: {TICKER} {OLD_VERDICT}→{NEW_VERDICT} (conviction {OLD}→{NEW})
