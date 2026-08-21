@@ -28,3 +28,7 @@ The live dashboard screen ranked TSM, ASGN, SPG, VITL, and GEHC among the strong
 ## 2026-08-21 — Independent four-company research run
 
 Four workers researched TSM, GEHC, ASGN, and SPG independently. Each wrote only its company folder under `~/vault/finance/notes/companies/{TICKER}/` and saved its ticker-specific `llm_deep_analysis` database row. The coordinator committed the outputs after the workers finished; shared watchlists, task boards, and history were unchanged. The research skill now requires this commit boundary because separate file paths do not make concurrent git-index operations safe.
+
+## 2026-08-21 — Main-push deployment verified
+
+The GitHub Actions deployment job was already present and functional, but the workflow ignored root Markdown-only pushes. It now runs for every push to `main`, passes the expected commit SHA to the remote deploy script, and verifies that y540 checked out that exact revision before regenerating and restarting the dashboard. Commit `d6783f8` deployed successfully; the service health endpoint returned `{"ok":true}`.
