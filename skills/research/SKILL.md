@@ -247,6 +247,29 @@ For either method:
 5. If both residual income and discounted cash flow are used, reconcile the difference
    and identify the input causing it. A large unexplained spread blocks a BUY verdict.
 
+### Owner-earnings cross-check
+
+For operating companies, also calculate a conservative owner-earnings figure in the
+spirit of Buffett’s approach:
+
+```text
+owner earnings = normalised net income
+               + non-cash charges
+               − maintenance capital expenditure
+               − normalised working-capital investment
+```
+
+Separate maintenance investment from growth investment and state the evidence for
+that split. Use owner earnings to test whether the residual-income or discounted
+cash-flow result represents cash that owners could actually receive over a full
+cycle. Do not turn this into a precise forecast when the split is uncertain; widen
+the valuation range and reduce conviction instead.
+
+The final decision must include a margin-of-safety check: compare the purchase price
+with the recession-case value and state the loss that would result if the ordinary
+case is wrong. Avoid false precision from detailed probability tables when the
+underlying business assumptions are weak.
+
 If the data is too unreliable to complete this step, verdict = WATCH or PASS, with
 the missing data named explicitly. The database’s `expected_value_pct` is a summary
 of the scenario table; it is not evidence that the valuation is sound.
