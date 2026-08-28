@@ -136,7 +136,7 @@ ORDER BY upside_pct DESC;
 
 Record: which models are bullish vs bearish. Note extreme divergences (>50pp spread).
 **CRITICAL: Check `timestamp` for each model.** If a model is >7 days old, compare its `current_price` to today's live price. If they diverge >5%, the model's upside % is INVALID — recalculate using the model's fair_value vs today's price, and note the discrepancy in the output.
-Known biases: DCF overvalues cyclicals at peak earnings, RIM undervalues asset-light companies. GBM and autoresearch are most reliable for return predictions.
+Known biases: DCF overvalues cyclicals at peak earnings, and residual-income models can undervalue asset-light companies. Machine-learning and autoresearch outputs are screening signals, not substitutes for a transparent fundamental valuation.
 
 ---
 
@@ -206,9 +206,56 @@ If no inflection is evident, the stock needs to be cheap enough on a static basi
 
 ---
 
+## STEP 10A: Fundamental Valuation (MANDATORY BEFORE SCENARIOS)
+
+The LLM must build a traceable valuation before assigning scenario targets or a BUY
+verdict. A plausible narrative is not a valuation. Choose the method that fits the
+company and say why:
+
+- **Residual income** is the default for asset-heavy companies, banks, insurers, and
+  companies whose free cash flow is distorted by temporary investment. Start with
+  book equity and calculate, for each forecast year:
+
+  ```text
+  required earnings = opening book equity × required return on equity
+  residual income = normalised net income − required earnings
+  equity value = current book equity + PV(future residual income)
+  ```
+
+  Roll book equity forward using net income minus dividends. Do not add full book
+  equity to a going-concern P/E valuation: the P/E already values the operating
+  assets that produce the earnings. Add only surplus assets, or use liquidation
+  value as a separate downside floor.
+
+- **Discounted cash flow** is appropriate when cash generation and reinvestment can
+  be forecast with reasonable confidence. Show maintenance versus growth investment,
+  working-capital changes, terminal growth, discount rate, debt, and surplus cash.
+  For an equity valuation, use cash available to shareholders; for enterprise value,
+  subtract net debt afterwards. Do not mix the two.
+
+For either method:
+
+1. Use the company’s reporting currency and verify units, shares, debt, cash, and
+   current price. Reject outputs with currency or scale errors.
+2. Normalise earnings or cash flow over a full cycle. Identify which current results
+   are cyclical, one-off, or caused by growth investment.
+3. Build at least three explicit operating cases: recession, ordinary conditions,
+   and strong conditions. The recession case must state revenue, margin, investment,
+   and balance-sheet effects; do not hide it in a vague bear label.
+4. Derive every target from the stated earnings, book-equity, cash-flow, and multiple
+   assumptions. A target supplied only as an LLM judgement is not acceptable.
+5. If both residual income and discounted cash flow are used, reconcile the difference
+   and identify the input causing it. A large unexplained spread blocks a BUY verdict.
+
+If the data is too unreliable to complete this step, verdict = WATCH or PASS, with
+the missing data named explicitly. The database’s `expected_value_pct` is a summary
+of the scenario table; it is not evidence that the valuation is sound.
+
+---
+
 ## STEP 11: Scenario Table (TIED TO REAL EVENTS)
 
-Each scenario must be driven by specific, identifiable conditions — not generic "things go well/badly."
+Each scenario must be driven by specific, identifiable conditions — not generic "things go well/badly." Its target must come from STEP 10A’s valuation, not from a freehand price guess.
 
 For each scenario, decompose the return into **earnings growth** + **multiple change**:
 
@@ -219,6 +266,11 @@ For each scenario, decompose the return into **earnings growth** + **multiple ch
 | **Bear** | X% | {specific: what goes wrong — loss of customer, margin compression from X} | {de-rating because Y} | $X | -X% |
 
 **Expected value** = sum(probability x return)
+
+Expected value is a decision summary, not a replacement for the valuation. Show the
+calculation and keep the probability assumptions separate from the underlying
+earnings and asset assumptions. If the expected return changes only because the
+multiple changes, flag the result as low quality.
 
 **Thesis quality check**: If your upside depends entirely on multiple expansion (not earnings growth), the thesis is LOW QUALITY. Flag it.
 
