@@ -399,6 +399,12 @@ If this is the **first** entry for a brand-new name (no prior call to grade), st
 If the file already exists, STEP 14 has already captured and graded the prior call, so now OVERWRITE the thesis with the new analysis (the old version is in git history).
 If the ticker has supplementary files, they live in `~/vault/finance/notes/companies/{TICKER}/` (subdirectory) — don't touch those except `history.md`, which STEP 14 appends to.
 
+The note must begin with a provenance block, before the business primer. Record the
+actual researcher and runtime configuration used for this run. Never infer a model
+name, version, provider, reasoning setting, or tool configuration after the fact. If
+the runner did not expose a field, write `not recorded` for that field. Do not put
+API keys, tokens, or other secrets in the note.
+
 Template:
 
 ```markdown
@@ -407,6 +413,16 @@ Template:
 **Sector:** {sector} | **Industry:** {industry}
 **Price:** ${price} ({YYYY-MM-DD}) | **Market Cap:** ${cap}
 **Analysis Date:** {YYYY-MM-DD}
+
+## Research Provenance
+
+- **Researcher:** {agent or subagent name}
+- **Provider:** {OpenAI / Google / Anthropic / other}
+- **Model:** {exact model ID and version}
+- **Reasoning setting:** {exact configured effort or thinking level}
+- **Other runtime configuration:** {temperature, tool settings, or other material settings; `not applicable` when unavailable}
+- **Research run:** {timestamp and run identifier, if available}
+- **Skill version:** `invest-engine` commit {commit hash}
 
 ## Business Primer
 
