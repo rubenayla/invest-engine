@@ -32,3 +32,6 @@ Four workers researched TSM, GEHC, ASGN, and SPG independently. Each wrote only 
 ## 2026-08-21 — Main-push deployment verified
 
 The GitHub Actions deployment job was already present and functional, but the workflow ignored root Markdown-only pushes. It now runs for every push to `main`, passes the expected commit SHA to the remote deploy script, and verifies that y540 checked out that exact revision before regenerating and restarting the dashboard. Commit `d6783f8` deployed successfully; the service health endpoint returned `{"ok":true}`.
+## 2026-08-28 — Gemini is suitable for first-pass investment research
+
+Gemini 3.1 Pro is good enough for broad first-pass company and industry research when the prompt requires source links, explicit assumptions, and a provenance block. Do not use a single Gemini report as the investment decision. The preferred workflow is Gemini high-thinking for coverage, Gemini low-thinking for an independent second pass, and GPT Luna high-reasoning to rebuild and verify the valuation from source figures. Reject any target that has no traceable calculation.
