@@ -6,4 +6,4 @@
 
 ## Account for LLM-research freshness in the opportunity ranking
 
-- [ ] Mark or discount stale research so an old expected-value estimate is not compared with a fresh one as if both described the current buying opportunity.
+- [ ] Make each ranked opportunity internally consistent: either freeze price, scenario returns and expected value at the research date, or rebase all scenario returns and expected value when the dashboard refreshes the price. Then mark or discount stale research so old and fresh analyses are not compared as if they had equal currency.
