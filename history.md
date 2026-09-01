@@ -35,3 +35,7 @@ The GitHub Actions deployment job was already present and functional, but the wo
 ## 2026-08-28 — Gemini is suitable for first-pass investment research
 
 Gemini 3.1 Pro is good enough for broad first-pass company and industry research when the prompt requires source links, explicit assumptions, and a provenance block. Do not use a single Gemini report as the investment decision. The preferred workflow is Gemini high-thinking for coverage, Gemini low-thinking for an independent second pass, and GPT Luna high-reasoning to rebuild and verify the valuation from source figures. Reject any target that has no traceable calculation.
+
+## 2026-09-01 — The dashboard's LLM order is an opportunity score, not a quality rank
+
+The live dashboard placed VST fifteenth because `llm_risk_adjusted_score` ranks verdict, whether the current price is at or below the research entry, expected value divided by bear-case loss, and conviction. It does not use the displayed 19/25 company-quality score. VST scored 150.9208 at $137.37; DECK immediately above it scored 150.9405, so the ordinal rank overstated a 0.0197-point near-tie. Several rows also use old LLM research with newly refreshed prices, which makes the cross-company order useful as a screen but not authoritative for capital allocation.
