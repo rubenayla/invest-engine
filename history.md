@@ -1,9 +1,9 @@
 
 ## 2026-08-16 — Thesis change: MP WATCH→BUY (conviction MEDIUM→MEDIUM)
-**Believed (prior variant perception):** Market was focused on 2028 magnet scale, but we were waiting for evidence of Stage 2 execution (heavy rare earths) or a pullback to .
-**Happened:** Q2 2026 revenue jumped 89% YoY on record NdPr production (840 mt). First commercial gadolinium oxide supply announced. GM magnet shipments on track for Q4.
-**Lesson (transferable):** When a capital-intensive manufacturing buildout proves its intermediate stage (Stage 2 separation), the multiple re-rates before the final stage (Stage 3 magnets) is fully online, because execution risk drops materially.
-**Surviving edge / re-upgrade triggers:** The Q4 2026 magnet shipments are the next catalyst. Thesis breaks if magnet yields/specs fail.
+**Believed (prior variant perception):** Market was focused on 2028 magnet scale, but we were waiting for evidence of separated heavy-rare-earth production or a pullback to $42–$45.
+**Happened:** Second-quarter 2026 revenue jumped 89% year over year on record neodymium-praseodymium production of 840 metric tons. First commercial gadolinium oxide supply announced. General Motors magnet shipments remained on track for the fourth quarter.
+**Lesson (transferable):** When a capital-intensive manufacturing buildout proves its intermediate separation step, the multiple re-rates before finished-magnet production is fully online, because execution risk drops materially.
+**Surviving edge / re-upgrade triggers:** Fourth-quarter 2026 magnet shipments are the next catalyst. The thesis breaks if magnet yields or specifications fail customer requirements.
 
 ## 2026-08-18 — Insider snapshot backfill implementation
 
@@ -47,3 +47,7 @@ The portfolio recommendation that preceded this check did not use that opportuni
 Fresh fundamental reviews reduced TSM from BUY to WATCH at $415.32, with 11% expected value before a Taiwan tail-risk allowance, and KER.PA from BUY to WATCH at €247.10, with 6% expected value. DECK remained BUY at $87.08 after rebuilding its earnings valuation, with 24% expected value and a 33% bear-case loss. VST's 2026-08-15 fundamental targets remained supported by the 2026-08-07 results; rebasing its $220/$180/$112 scenarios from $148.13 to $137.37 raised expected value from 17% to about 26% and reduced the modeled bear loss to about 18%. VST therefore ranked first and DECK second in the personal risk-adjusted selection, not in the independent dashboard order. The personal allocation pairs six VST shares with five VWCE shares, using the global fund to start correcting the portfolio's lack of a broad equity core.
 
 This comparison exposed a dashboard consistency bug: its latest price changes while the stored scenario returns and expected value remain anchored to the research-date price. The displayed LLM order is therefore independent research output, but it is not a fully current ranking until the scenarios are rebased or the entire snapshot is frozen consistently.
+
+## 2026-09-02 — Policy rhetoric is not a valuation input without signed economics
+
+The MP and USAR comparison showed that a presidential industry endorsement can confirm policy direction without changing company cash flows. Both shares declined after the 2026-07-15 magnet remark and rallied around later financing and operating evidence. Future policy monitoring must identify the recipient, amount, binding terms, milestones, shareholder consideration, and per-share cash-flow effect before changing a company valuation.
