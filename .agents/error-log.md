@@ -28,10 +28,10 @@ Prevention: identify the decision a score is designed to rank before judging its
 
 Two attempts to verify table permissions on Hetzner let the remote shell consume SQL quoting: the first removed SQL string quotes, and the second expanded PostgreSQL dollar quotes into the shell process identifier. A later checkout check also compared the remote commit with an invented expansion of its abbreviated hash instead of reading the local full hash. The database connection and checkout remained healthy; parameterized SQL and a comparison of the two values actually returned by Git verified both results.
 
+Prevention: send SQL values as database-driver parameters when a query crosses both local and remote shells; this removes the nested quoting layer instead of adding escapes to it. Compare identifiers by reading both exact values in the same check; never fill in an abbreviated identifier from memory.
+
 ## 2026-09-04 — Assumed the wrong Hetzner checkout path (GPT-5.6 Sol)
 
 The final database smoke test first tried `/home/rubenayla/invest-engine`, although the checkout is `/home/rubenayla/repos/invest-engine`. The failed `cd` stopped that verification command before it could query PostgreSQL; no state changed. A bounded directory search found the real checkout, and the repeated test connected through the configured remote database URL and counted 878 assets.
 
 Verify remote checkout paths with `find` or the existing SSH configuration before using them in a compound validation command, because a remembered path can make later checks appear to have run when `set -e` stopped them early.
-
-Prevention: send SQL values as database-driver parameters when a query crosses both local and remote shells; this removes the nested quoting layer instead of adding escapes to it. Compare identifiers by reading both exact values in the same check; never fill in an abbreviated identifier from memory.
