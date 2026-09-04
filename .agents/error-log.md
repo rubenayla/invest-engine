@@ -26,6 +26,6 @@ Prevention: identify the decision a score is designed to rank before judging its
 
 ## 2026-09-04 — Remote SQL verification was misquoted twice (GPT-5.6 Sol)
 
-Two attempts to verify table permissions on Hetzner let the remote shell consume SQL quoting: the first removed SQL string quotes, and the second expanded PostgreSQL dollar quotes into the shell process identifier. The database connection itself remained healthy, and a parameterized third query verified the intended permissions.
+Two attempts to verify table permissions on Hetzner let the remote shell consume SQL quoting: the first removed SQL string quotes, and the second expanded PostgreSQL dollar quotes into the shell process identifier. A later checkout check also compared the remote commit with an invented expansion of its abbreviated hash instead of reading the local full hash. The database connection and checkout remained healthy; parameterized SQL and a comparison of the two values actually returned by Git verified both results.
 
-Prevention: send SQL values as database-driver parameters when a query crosses both local and remote shells; this removes the nested quoting layer instead of adding escapes to it.
+Prevention: send SQL values as database-driver parameters when a query crosses both local and remote shells; this removes the nested quoting layer instead of adding escapes to it. Compare identifiers by reading both exact values in the same check; never fill in an abbreviated identifier from memory.
