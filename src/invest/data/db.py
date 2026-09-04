@@ -11,8 +11,8 @@ Set one of the two, using your own credentials:
     export DB_URL=postgresql://USER:PASSWORD@localhost:5432/invest   # direct
     export DB_URL=postgresql://USER:PASSWORD@localhost:5433/invest   # via SSH tunnel
 
-or write the same URL into ~/.invest_db_url, which keeps it out of shell history
-and out of the process environment. See README.md for creating the database and
+or write the same URL into a mode-600 ~/.invest_db_url, which keeps it out of the
+repository and process environment. See README.md for creating the database and
 loading scripts/create_postgres_schema.sql.
 """
 

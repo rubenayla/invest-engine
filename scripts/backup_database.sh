@@ -13,11 +13,9 @@ BACKUP_DIR="${INVEST_BACKUP_DIR:-$REPO_ROOT/backups}"
 LOG_FILE="$BACKUP_DIR/backup.log"
 KEEP_DAYS=7
 
-# Credentials come from DB_URL, or from ~/.invest_db_url if that is unset —
-# the same source the Python code uses. Nothing is hardcoded here.
-DB_URL="${DB_URL:-$(cat "$HOME/.invest_db_url" 2>/dev/null)}"
-if [ -z "$DB_URL" ]; then
-    echo "DB_URL is not set and $HOME/.invest_db_url does not exist; cannot back up." >&2
+# Resolve the URL through the same Python path used by application code.
+if ! DB_URL="$(cd "$REPO_ROOT" && uv run python -c 'from invest.data.db import get_db_url; print(get_db_url())')"; then
+    echo "Cannot resolve the database URL; set DB_URL or write ~/.invest_db_url." >&2
     exit 1
 fi
 

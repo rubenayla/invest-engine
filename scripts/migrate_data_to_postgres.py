@@ -2,15 +2,11 @@
 """
 One-time migration: SQLite → PostgreSQL.
 
-Reads all tables from data/stock_data.db and copies them into the Postgres
-database specified by DB_URL (or default localhost:5432).
+Reads all tables from data/stock_data.db and copies them into the configured
+PostgreSQL database. Database configuration follows README.md.
 
 Usage:
-    # On the server (direct):
-    DB_URL=postgresql://invest:YOUR_DB_PASSWORD@localhost:5432/invest uv run python scripts/migrate_data_to_postgres.py
-
-    # From Mac (via SSH tunnel — run `ssh -N hetzner-db` first):
-    DB_URL=postgresql://invest:YOUR_DB_PASSWORD@localhost:5433/invest uv run python scripts/migrate_data_to_postgres.py
+    uv run python scripts/migrate_data_to_postgres.py
 """
 
 from __future__ import annotations

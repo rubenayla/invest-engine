@@ -31,12 +31,24 @@ psql invest -f scripts/create_postgres_schema.sql
 
 # 3. Tell the code how to connect, using the password chosen above
 echo 'postgresql://invest:choose-your-own-password@localhost:5432/invest' > ~/.invest_db_url
+chmod 600 ~/.invest_db_url
 ```
 
-`DB_URL` in the environment takes precedence over `~/.invest_db_url` if both are set.
-Neither has a default — the code raises a message naming both options rather than
-guessing a host and password. Reaching a database on another machine over an SSH
-tunnel usually means port 5433 instead of 5432.
+The application resolves the database URL in one place: `DB_URL` in the environment
+takes precedence over `~/.invest_db_url` if both are set. Neither has a default —
+the code raises a message naming both options rather than guessing a host and
+password. Use port `5432` when PostgreSQL is running directly on the local machine.
+Use port `5433` only when an SSH tunnel forwards local port 5433 to PostgreSQL's
+remote port 5432, for example:
+
+```bash
+ssh -fN -L 5433:localhost:5432 <ssh-host>
+export DB_URL=postgresql://invest:<your-password>@localhost:5433/invest
+```
+
+Keep the password as your own mode-`600` local value; do not copy a real credential
+into the repository. For a direct local connection, use the same URL with port
+`5432`.
 
 The database starts empty. Populate it with `uv run python scripts/update_all.py`,
 which fetches prices and fundamentals from Yahoo Finance and SEC EDGAR.

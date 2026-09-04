@@ -8,10 +8,11 @@ cluster-aggregated descriptive pass for low-n politicians whose
 trades come in same-day batches (e.g. Pelosi).
 
 Usage:
-    DB_URL=postgresql://invest:YOUR_DB_PASSWORD@localhost:5433/invest \
     uv run python scripts/backtest_politician.py \
         --name "Pelosi, Nancy" \
         --out notes/research/pelosi_backtest_2026.md
+
+Database configuration follows README.md.
 """
 
 from __future__ import annotations

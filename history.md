@@ -51,3 +51,13 @@ This comparison exposed a dashboard consistency bug: its latest price changes wh
 ## 2026-09-02 — Policy rhetoric is not a valuation input without signed economics
 
 The MP and USAR comparison showed that a presidential industry endorsement can confirm policy direction without changing company cash flows. Both shares declined after the 2026-07-15 magnet remark and rallied around later financing and operating evidence. Future policy monitoring must identify the recipient, amount, binding terms, milestones, shareholder consideration, and per-share cash-flow effect before changing a company valuation.
+
+## 2026-09-04 — Hetzner access to the y540 investment database
+
+The investment PostgreSQL database remains private on y540 at `127.0.0.1:5432`. The enabled y540 user service `invest-y540-db-reverse-tunnel.service` now maintains an `autossh` reverse tunnel to Hetzner at `127.0.0.1:15432`; y540 user lingering is enabled, so the service does not depend on an interactive login. Hetzner stores the connection URL once in `/home/rubenayla/.invest_db_url`, owned by `rubenayla` with mode `600`. The URL was copied through SSH and was not committed or printed.
+
+The Hetzner checkout successfully used `invest.data.db.get_connection()` through that tunnel and returned database `invest` and role `invest`. The role has read access to `assets` and read, insert, and update access to `valuation_results`, which covers the research skill's database reads and `llm_deep_analysis` saves. PostgreSQL on Hetzner port `5432` is the separate Partle service and remains unchanged.
+
+Hetzner does not hold a copy of the investment database. Its invest checkout retains code, models, and the Python environment; only small stock-cache JSON files remain under `data/`. Disk cleanup removed three stale investment transfer archives from `/tmp`, the regenerable uv cache, and nine unused Codex releases after confirming that all running Codex processes used release `0.153.2`. Free space increased from 16 MB to 3.4 GB, with root usage falling from 100% to 91%. The removed Codex releases and uv cache can be downloaded again; the stale transfer archives can be recreated from the y540 source database and backups.
+
+Database configuration is resolved centrally by `src/invest/data/db.py`: a process-level `DB_URL` override takes precedence over the per-host `~/.invest_db_url`. Runtime scripts import this helper; documentation and tests may still name `DB_URL` without defining another source of truth.

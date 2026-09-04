@@ -23,3 +23,9 @@ Prevention: each job that reads repository files must declare its own checkout s
 The user asked why VST ranked fifteenth among buying opportunities. The agent correctly inspected the formula but then called the column misleading because the sort did not use the displayed company-quality score. The user's interpretation was the intended one: the column rates the attractiveness of buying now, while quality is one input to the underlying research rather than the sorting target. More importantly, the earlier VST recommendation had selected an expression of the power thesis that reached its entry band without comparing it with the higher-ranked opportunities already present in the database.
 
 Prevention: identify the decision a score is designed to rank before judging its inputs. For this dashboard, evaluate whether the opportunity order is coherent; do not substitute a different target such as standalone business quality. Before recommending a new single-stock purchase, inspect the higher-ranked live opportunities and document why portfolio fit or stale research excludes each one that would otherwise beat it.
+
+## 2026-09-04 — Remote SQL verification was misquoted twice (GPT-5.6 Sol)
+
+Two attempts to verify table permissions on Hetzner let the remote shell consume SQL quoting: the first removed SQL string quotes, and the second expanded PostgreSQL dollar quotes into the shell process identifier. The database connection itself remained healthy, and a parameterized third query verified the intended permissions.
+
+Prevention: send SQL values as database-driver parameters when a query crosses both local and remote shells; this removes the nested quoting layer instead of adding escapes to it.

@@ -345,7 +345,7 @@ class HTMLGenerator:
                 </div>
                 <div class="health-row" style="margin-top:6px; font-size:0.82em; color:#738091;">
                     Update buttons fetch data only. To refresh ML models, run on Mac:
-                    <code style="background:#161b22; padding:1px 5px; border-radius:3px; font-size:0.95em;">ssh -N hetzner-db & uv run python scripts/update_all.py --skip-fetch</code>
+                    <code style="background:#161b22; padding:1px 5px; border-radius:3px; font-size:0.95em;">uv run python scripts/update_all.py --skip-fetch</code>
                 </div>
             </div>
         </div>'''
