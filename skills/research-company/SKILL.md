@@ -1,9 +1,9 @@
 ---
-name: research
-description: Deep-dive public-equity research for a company ticker, covering the business, primary-source earnings evidence, variant perception, financial verification, valuation triangulation, risks, catalysts, scenarios, timing, and a BUY/WATCH/PASS verdict. Use when researching one or more stocks beyond the dashboard's quantitative screen or when creating or refreshing company research notes.
+name: research-company
+description: Deep-dive public-equity research for a company ticker, covering the business, primary-source earnings evidence, variant perception, financial verification, valuation triangulation, risks, catalysts, scenarios, timing, and a BUY/WATCH/PASS verdict. Use for listed-company or ticker analysis, not general web research.
 ---
 
-# Research TICKER — Deep dive on one company
+# Research Company TICKER — Deep dive on one listed company
 
 Full investment research: news, variant perception, financials, scenarios, verdict.
 Saves to `~/vault/finance/notes/companies/TICKER.md` and `valuation_results` DB (model: `llm_deep_analysis`).

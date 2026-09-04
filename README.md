@@ -50,7 +50,7 @@ The easiest way to run the full pipeline (data fetch, valuations, dashboard):
 /update_db --skip-fetch        # Re-run models on existing data
 /update_db --universe europe   # Different universe
 /brief                         # Portfolio intelligence — sell signals, buy opportunities
-/research TICKER               # Deep dive one company — news, scenarios, verdict
+/research-company TICKER       # Deep dive one company — news, scenarios, verdict
 ```
 
 `/update_db` fetches data, runs all models (GBM + classic valuations), generates the dashboard, and starts a live server at http://localhost:8080.
@@ -178,8 +178,8 @@ All configurations can be customized to match your investment criteria.
 For individual stock deep dives (beyond the scanner), use the analysis methodology:
 
 ```
-/research TICKER                                # Run with the research workflow
-skills/research/SKILL.md                        # The agent-agnostic methodology
+/research-company TICKER                        # Run with the research workflow
+skills/research-company/SKILL.md                # The agent-agnostic methodology
 ```
 
 The command writes one analysis file per company and maintains a ranked

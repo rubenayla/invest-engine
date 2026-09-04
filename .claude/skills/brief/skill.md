@@ -124,9 +124,9 @@ For each holding in `~/vault/finance/notes/portfolio/portfolio.md`, run parallel
    ```
    Skip tickers that have an LLM analysis less than 7 days old. Also skip speculative/illiquid tickers (market cap < $5B, ADV < 1M).
 
-4. **For the top 5-8 opportunities without fresh analysis**, launch parallel subagents. Each subagent MUST follow the FULL methodology in `.claude/commands/research.md` — all 9 steps including web search, variant perception, scenario analysis, and DB write. Pass this prompt to each agent:
+4. **For the top 5-8 opportunities without fresh analysis**, launch parallel subagents. Each subagent MUST follow the FULL methodology in `.claude/commands/research-company.md` — all 9 steps including web search, variant perception, scenario analysis, and DB write. Pass this prompt to each agent:
 
-   > "You are an investment analyst. Read and follow the FULL methodology in `/path/to/invest/.claude/commands/research.md` to produce a deep company analysis for **TICKER**. Follow ALL steps 0-9. Save to `~/vault/finance/notes/companies/TICKER.md`. Today is {DATE}. Be honest and critical."
+   > "You are an investment analyst. Read and follow the FULL methodology in `/path/to/invest/.claude/commands/research-company.md` to produce a deep company analysis for **TICKER**. Follow ALL steps 0-9. Save to `~/vault/finance/notes/companies/TICKER.md`. Today is {DATE}. Be honest and critical."
 
 5. For tickers that already have a fresh LLM analysis, just read the existing `~/vault/finance/notes/companies/TICKER.md` and summarize the verdict.
 
