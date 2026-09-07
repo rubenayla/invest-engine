@@ -35,3 +35,21 @@ Prevention: send SQL values as database-driver parameters when a query crosses b
 The final database smoke test first tried `/home/rubenayla/invest-engine`, although the checkout is `/home/rubenayla/repos/invest-engine`. The failed `cd` stopped that verification command before it could query PostgreSQL; no state changed. A bounded directory search found the real checkout, and the repeated test connected through the configured remote database URL and counted 878 assets.
 
 Verify remote checkout paths with `find` or the existing SSH configuration before using them in a compound validation command, because a remembered path can make later checks appear to have run when `set -e` stopped them early.
+
+## 2026-09-07 — Used system Python for a repository database check (GPT-5.6 Sol)
+
+After saving 20 rare-earth verdict rows, the first verification command invoked system `python3`, which did not have `psycopg2`; the writes had completed, but the verification stopped before querying them. Re-running the same read through `uv run python`, the repository environment used by the save script, verified all 20 named rows.
+
+Use `uv run python` for repository database checks so validation runs with the same dependencies and connection code as the operation it verifies.
+
+## 2026-09-07 — Assumed a database join key during verdict readback (GPT-5.6 Sol)
+
+After two corrected verdicts were flushed successfully, the first readback query assumed `valuation_results.asset_id` and `created_at`; the table stores `ticker` and `timestamp` directly, so PostgreSQL rejected the query before returning data. Reading `information_schema.columns` exposed the actual schema, and the repeated query verified ARU.AX and NEO.TO as WATCH with their intended entry prices.
+
+Inspect the live table columns or reuse the writer's SQL before composing an ad hoc verification query, because a plausible foreign-key schema is not evidence that this database uses it.
+
+## 2026-09-07 — A stale rename path split one vault checkpoint (GPT-5.6 Sol)
+
+The first vault staging command named the deleted pre-rename path `finance/notes/companies/4063.T.md`. `git add` failed, but the shell continued to the later commit commands because the compound command did not use `set -e`; only the previously staged rename entered commit `949f2c6`. A second, checked commit `b3aa525` added the remaining research files, and both were pushed without including unrelated vault changes.
+
+Use `set -e` for stage-check-commit sequences and stage the destination of a completed rename, because a failed pathspec must stop the checkpoint before `git commit` runs.
