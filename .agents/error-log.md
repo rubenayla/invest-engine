@@ -53,3 +53,15 @@ Inspect the live table columns or reuse the writer's SQL before composing an ad 
 The first vault staging command named the deleted pre-rename path `finance/notes/companies/4063.T.md`. `git add` failed, but the shell continued to the later commit commands because the compound command did not use `set -e`; only the previously staged rename entered commit `949f2c6`. A second, checked commit `b3aa525` added the remaining research files, and both were pushed without including unrelated vault changes.
 
 Use `set -e` for stage-check-commit sequences and stage the destination of a completed rename, because a failed pathspec must stop the checkpoint before `git commit` runs.
+
+## 2026-09-07 — Stopped before the requested usage limit and mislabeled the meter (GPT-5.6 Sol)
+
+The user explicitly asked to keep the research run close to zero remaining usage. The first pass stopped with 18% of the rolling five-hour allowance left and described it as a weekly limit. The live meter exposes no weekly percentage; it exposes a rolling five-hour allowance, paid-credit balance and reset credits. Research was still incomplete because the valuation audit, expanded company universe and systematic Trump-event study had not been integrated.
+
+When a user sets an explicit resource target, use the live meter's exact labels and continue until the requested threshold or a real task boundary is reached. Do not substitute an unstated safety margin. Finish synthesis and verification before calling a research run complete.
+
+## 2026-09-07 — Placed the Codex search flag after the subcommand (GPT-5.6 Sol)
+
+The first four tmux workers exited immediately because their commands used `codex exec --search`; the command-line interface requires the global `--search` flag before `exec`. One bounded retry with `codex --search exec` started the workers successfully.
+
+Check global command-line flags with `--help` or a known working invocation before launching a multi-worker batch, because multiplying a malformed command wastes every slot.
