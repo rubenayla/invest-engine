@@ -71,3 +71,9 @@ Check global command-line flags with `--help` or a known working invocation befo
 The NRG thesis said that position data lived "in the private vault, not here," although the thesis itself is under `~/vault/finance/notes/`. The research-company skill still carried the pre-migration claim that company notes lived in a public invest repository, even after research moved into the private vault.
 
 Describe the boundary by document purpose: company theses hold security-level analysis so current holdings and cost basis do not anchor it; personal position facts live in the vault's portfolio and transaction records. Verify the actual destination before describing a privacy boundary.
+
+## 2026-09-14 — Omitted NRG's critical fuel dependency (GPT-5.6 Sol)
+
+The NRG thesis treated gas-fired generation as an output asset without identifying how gas reaches the plants or who bears fuel risk. NRG buys from multiple suppliers, generally on spot for mid-merit and peaking plants, and uses contracted transport and storage; the proposed data-center contract passes fuel cost through, but the site, pipeline capacity and resilience plan remain undisclosed.
+
+For a business that converts a critical input into its product, identify the input suppliers, transport infrastructure, concentration, price pass-through and physical non-delivery risk. A contract that reimburses higher input prices does not guarantee that the input arrives.

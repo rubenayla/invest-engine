@@ -57,7 +57,7 @@ Before any earnings reading, before any ratios, write a plain-English primer of 
 
 Structure it as **five** short paragraphs (no jargon, no acronyms without spelling them out the first time):
 
-1. **Core business today** — what they actually sell, who pays them, how they make money. Concrete examples of products/services and customers. If revenue is split between segments, name the biggest 2-3 and explain each.
+1. **Core business today** — what they actually sell, who pays them, how they make money. Concrete examples of products/services and customers. If revenue is split between segments, name the biggest 2-3 and explain each. Identify any indispensable raw material, component, infrastructure or supplier: who provides it, how concentrated supply is, whether the company owns or contracts the transport, and who bears price and non-delivery risk.
 
 2. **Why customers choose them (the value proposition)** — what specific problem does the product solve, and why does the customer pick it over the next-best alternative? Compare directly to the alternatives ("open surgery vs robotic", "Postgres vs Oracle DB", "cash vs credit card", "Word vs Google Docs"). Describe the *concrete improvement* the customer gets in terms a non-customer would understand: "incisions go from 20 cm to 1 cm, recovery from 6 weeks to 2", "query 10× faster at 1/3 the compute cost", "tracks 200 metrics the legacy system can't see". If the product is technical, explain what it *does* mechanically — wristed instruments inside the body, motion-scaling, tremor filtering, etc. — not just that it's "premium" or "better." A reader should finish this paragraph and understand why a rational customer would pay for the product instead of the cheaper/older alternative.
 
@@ -85,6 +85,7 @@ From these primary sources, extract and write down:
 - **Segment and geographic revenue breakdowns** and which specific segments/regions moved.
 - **Margin commentary** — gross margin, operating margin changes YoY and QoQ, with the reasons management gave.
 - **Customer concentration** — any large customer losses, renewals pushed, or federal/government exposure.
+- **Critical input dependencies** — named suppliers and transporters when disclosed; otherwise say that names are undisclosed. Separate price pass-through from physical availability, because recovering a higher input cost does not protect against non-delivery.
 - **Guidance changes** — what was raised, what was cut, what was held. Decompose by segment if disclosed.
 
 **RULE: If you cannot fetch the IR page (tool failure, paywall), explicitly say so in the output and flag the analysis as "news-summary-only" with LOWER confidence.**
