@@ -77,3 +77,9 @@ Describe the boundary by document purpose: company theses hold security-level an
 The NRG thesis treated gas-fired generation as an output asset without identifying how gas reaches the plants or who bears fuel risk. NRG buys from multiple suppliers, generally on spot for mid-merit and peaking plants, and uses contracted transport and storage; the proposed data-center contract passes fuel cost through, but the site, pipeline capacity and resilience plan remain undisclosed.
 
 For a business that converts a critical input into its product, identify the input suppliers, transport infrastructure, concentration, price pass-through and physical non-delivery risk. A contract that reimburses higher input prices does not guarantee that the input arrives.
+
+## 2026-09-14 — Described NRG's development capacity as completed-equipment economics (GPT-5.6 Sol)
+
+The NRG thesis said the company had reserved 5.4 GW of turbines and that all 5.4 GW would produce about $2.5B of recurring EBITDA. The filings distinguish a development agreement for up to 5.4 GW from turbine-slot reservations that reached 3.6 GW by the 2025 10-K; management later described full turbine and construction capacity as secured. The >$2.5B illustration covered roughly 6 GW, including existing-plant uprates, rather than only the 5.4 GW new-build pipeline.
+
+Classify every development pipeline by contractual and construction stage. Value completed cash flows only after showing the remaining capital, financing, delay and execution probability, and separate the completed project's gross value from the value created above construction cost.

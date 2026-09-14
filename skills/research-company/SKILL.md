@@ -247,6 +247,11 @@ For either method:
    assumptions. A target supplied only as an LLM judgement is not acceptable.
 5. If both residual income and discounted cash flow are used, reconcile the difference
    and identify the input causing it. A large unexplained spread blocks a BUY verdict.
+6. For development pipelines, distinguish a memorandum, customer discussion, equipment
+   or construction-slot reservation, binding purchase order, construction and commercial
+   operation. Do not value reserved capacity as an operating asset. Show the capital still
+   required, financing, time to cash flow and execution probability; separate the future
+   gross value of a completed project from the value created above its construction cost.
 
 ### Owner-earnings cross-check
 
