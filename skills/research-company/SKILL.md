@@ -337,19 +337,19 @@ Even a great company is a bad buy at the wrong price/time. Check:
 **If WATCH**: What would change your mind? What price/event triggers a BUY?
 **If PASS**: Why? Is it permanently uninvestable or just wrong timing?
 
-### Public-vs-private content rule (MANDATORY)
+### Company-analysis-vs-position-record rule (MANDATORY)
 
-The file you save under `~/vault/finance/notes/companies/{TICKER}.md` lives in the **public**
-invest repo. It must contain ONLY generic research that anyone could write,
-NOT decisions tied to the user's personal portfolio.
+The file saved under `~/vault/finance/notes/companies/{TICKER}.md` is private because the
+entire vault is private. Keep it focused on the company so the investment analysis remains
+useful independently of the user's current holding and is not anchored to cost basis or P&L.
 
-**Belongs in the public file** (write these freely):
+**Belongs in the company thesis** (write these freely):
 - Scenarios, quality scores, valuations, model EVs, BUY/WATCH/PASS verdict
 - Generic conditional language: "Existing holders: trim 30-50%", "Would
   upgrade to BUY at $X", "If already long: consider trimming"
 - Watchlist-style entry/exit prices that anyone could act on
 
-**Does NOT belong in the shared research file** (keep it in your private notes — see below):
+**Belongs in the position and transaction records instead:**
 - Specific cash amounts of your own position, or its weight in your portfolio
 - Specific share counts you hold
 - Your cost basis or the dates you bought
@@ -358,10 +358,10 @@ NOT decisions tied to the user's personal portfolio.
   user owns
 
 If the verdict naturally references personal context (e.g. you'd like to
-say "given your existing 16% position, don't add"), write a SEPARATE
-decision note at `$INVEST_PRIVATE_NOTES/positions/{TICKER}.md` with the
-personal-decision content, and keep the public file generic. Do not let
-the two leak into each other.
+say "given your existing 16% position, don't add"), record that decision in
+`~/vault/finance/notes/portfolio/portfolio.md` and, for an executed trade, the
+corresponding `~/vault/finance/notes/transactions/` note. Keep the company thesis
+focused on the security itself.
 
 ---
 
@@ -515,12 +515,11 @@ Template:
 **If BUY:** Entry at $X, scale-in plan (generic — no personal share counts), thesis-break at $X
 **If WATCH:** Would upgrade on {specific condition}
 
-<!-- Do NOT add a "Position Context" / "Personal Position" / "My Holding"
-     section here. The public file is generic research only. Personal
-     position size, cost basis, P&L, and share counts go to
-     $INVEST_PRIVATE_NOTES/positions/{TICKER}.md (or are tracked in
-     portfolio.md / notes/transactions/). See the Public-vs-private
-     content rule in STEP 13 above. -->
+<!-- Keep this company thesis independent of the current holding so cost basis
+     and P&L do not anchor the analysis. Position size, share count and cost basis
+     belong in notes/portfolio/portfolio.md; executed decisions belong in
+     notes/transactions/. See the company-analysis-vs-position-record rule in
+     STEP 13 above. -->
 ```
 
 ---

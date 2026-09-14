@@ -65,3 +65,9 @@ When a user sets an explicit resource target, use the live meter's exact labels 
 The first four tmux workers exited immediately because their commands used `codex exec --search`; the command-line interface requires the global `--search` flag before `exec`. One bounded retry with `codex --search exec` started the workers successfully.
 
 Check global command-line flags with `--help` or a known working invocation before launching a multi-worker batch, because multiplying a malformed command wastes every slot.
+
+## 2026-09-14 — Called a private-vault thesis public (GPT-5.6 Sol)
+
+The NRG thesis said that position data lived "in the private vault, not here," although the thesis itself is under `~/vault/finance/notes/`. The research-company skill still carried the pre-migration claim that company notes lived in a public invest repository, even after research moved into the private vault.
+
+Describe the boundary by document purpose: company theses hold security-level analysis so current holdings and cost basis do not anchor it; personal position facts live in the vault's portfolio and transaction records. Verify the actual destination before describing a privacy boundary.
