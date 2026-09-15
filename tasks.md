@@ -1,5 +1,9 @@
 # Tasks
 
+## Restore the required unauthenticated POST response
+
+- [ ] Investigate why `POST https://invest.rubenayla.xyz/` returns `405 Allow: HEAD, GET` instead of the required `401`; confirm the intended public-read/authenticated-write boundary at the proxy and application layers.
+
 ## Re-run insider snapshot backfill against the investment database
 
 - [ ] Run `ssh -fN -L 5433:localhost:5432 y540-ubuntu`, then `uv run python scripts/backfill_insider_snapshots.py` and `uv run python scripts/dashboard.py`. The investment database is healthy on `y540-ubuntu`; `hetzner-db` reaches the separate Partle database.

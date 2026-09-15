@@ -78,6 +78,12 @@ The NRG thesis treated gas-fired generation as an output asset without identifyi
 
 For a business that converts a critical input into its product, identify the input suppliers, transport infrastructure, concentration, price pass-through and physical non-delivery risk. A contract that reimburses higher input prices does not guarantee that the input arrives.
 
+## 2026-09-15 — Assumed a PostgreSQL date column was typed as date (GPT-5.6 Luna)
+
+The first database freshness query compared the text column `scanner_score_history.date` directly with `CURRENT_DATE`, which raised `operator does not exist: text = date` and prevented the remaining checks in that query from running. The corrected query explicitly cast the column with `date::date` and returned the freshness evidence.
+
+Inspect live column types before composing timestamp and date predicates, because a schema that looks date-like is not evidence of its PostgreSQL type.
+
 ## 2026-09-14 — Described NRG's development capacity as completed-equipment economics (GPT-5.6 Sol)
 
 The NRG thesis said the company had reserved 5.4 GW of turbines and that all 5.4 GW would produce about $2.5B of recurring EBITDA. The filings distinguish a development agreement for up to 5.4 GW from turbine-slot reservations that reached 3.6 GW by the 2025 10-K; management later described full turbine and construction capacity as secured. The >$2.5B illustration covered roughly 6 GW, including existing-plant uprates, rather than only the 5.4 GW new-build pipeline.
