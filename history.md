@@ -77,3 +77,7 @@ The 39-event Trump study separated rhetoric, effective presidential action and n
 ## 2026-09-15 — Scheduled-job monitor found a site method mismatch
 
 At 03:07 CEST on y540, the 02:30 politician-data job completed with exit 0 and inserted 3 trades; the 04:00 backup and 05:00 update were still pending as expected. The database was reachable at localhost:5432, the latest backup was a 55M dump from 2026-09-14, the latest completed update exited 0 at 06:52, and the dashboard and cloudflared services were active. The public GET returned 200, but `POST /` returned 405 with `Allow: HEAD, GET`, not the required 401. The open follow-up is recorded in `tasks.md`.
+
+## 2026-09-16 — Scheduled-job monitor found the same site method mismatch
+
+At 03:08 CEST on y540, the 02:30 politician-data job logged a successful run with 3 documents processed, 8 trades parsed, 6 inserted, and 0 errors. The 04:00 backup and 05:00 update were still pending as expected. The latest completed update logged exit 0 at 06:57 on 2026-09-15; its database writes reached `current_stock_data` at 05:47, `valuation_results` at 06:57, and `scanner_score_history` at 2026-09-15. The latest backup was 57.6 MB from 2026-09-15, and the daily dumps increased in size across the previous eight runs. The database resolved to `localhost:5432/invest`, both services were active, GET returned 200, and POST returned 405 instead of the required 401. The follow-up remains in `tasks.md`.
