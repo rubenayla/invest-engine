@@ -88,3 +88,7 @@ At 03:08 CEST on y540, the 02:30 politician-data job logged a successful run wit
 ## 2026-09-18 — Scheduled-job monitor found the same site method mismatch
 
 At 03:08 CEST on y540, the 02:30 politician-data job completed successfully and found no new PTRs. The 04:00 backup and 05:00 update were still pending as expected. The investment database resolved to `localhost:5432/invest`; the latest completed update exited 0 on 2026-09-17 and wrote 1,809 current-stock rows, 16,105 valuation rows, and 1,934 scanner rows. Backups through 2026-09-17 were present at 55–56 MB and increased in size across the recent runs. Both services were active. GET returned 200, but POST returned 405 with `Allow: HEAD, GET`, not the required 401. The follow-up remains in `tasks.md`.
+
+## 2026-09-19 — Scheduled-job monitor found the same site method mismatch
+
+At 03:08 CEST on y540, the 02:30 politician-data job completed with 2 documents processed, 10 trades parsed, 2 inserted, and 0 errors. The 04:00 backup and 05:00 update were still pending as expected. The investment database resolved to `localhost:5432/invest`; the latest completed update exited 0 on 2026-09-18 and wrote 1,809 current-stock rows, 16,104 valuation rows, and 1,934 scanner rows. The latest backup was 57.8 MB from 2026-09-18, and daily dump sizes increased from 57.4 MB to 57.8 MB across the recent runs. Both services were active. GET returned 200, but POST returned 405 with `Allow: HEAD, GET`, not the required 401. The follow-up remains in `tasks.md`.
