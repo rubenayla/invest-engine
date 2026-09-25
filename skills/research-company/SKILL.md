@@ -1,12 +1,14 @@
 ---
 name: research-company
-description: Deep-dive public-equity research for a company ticker, covering the business, primary-source earnings evidence, variant perception, financial verification, valuation triangulation, risks, catalysts, scenarios, timing, and a BUY/WATCH/PASS verdict. Use for listed-company or ticker analysis, not general web research.
+description: Deep-dive public-equity research for a company ticker, including a concise visual company brief, primary-source earnings evidence, valuation, risks, catalysts, scenarios, and a BUY/WATCH/PASS verdict. Use for listed-company research, not general web research.
 ---
 
 # Research Company TICKER — Deep dive on one listed company
 
-Full investment research: news, variant perception, financials, scenarios, verdict.
-Saves to `~/vault/finance/notes/companies/TICKER.md` and `valuation_results` DB (model: `llm_deep_analysis`).
+Full investment research: news, variant perception, financials, scenarios, verdict, and a visual brief.
+Saves the thesis to `~/vault/finance/notes/companies/TICKER.md`, a visual brief to
+`~/vault/finance/notes/companies/TICKER/visual-report.html`, and the verdict to
+`valuation_results` (model: `llm_deep_analysis`).
 
 ## Parallel research contract
 
@@ -527,6 +529,16 @@ Template:
      notes/transactions/. See the company-analysis-vs-position-record rule in
      STEP 13 above. -->
 ```
+
+### Visual companion report
+
+After writing or materially refreshing the thesis, create the self-contained
+`~/vault/finance/notes/companies/{TICKER}/visual-report.html` companion. Read
+[`references/visual-report.md`](references/visual-report.md) for its layout,
+financial-series rules, and verification checklist. The Markdown thesis remains
+the research record; the HTML file is a concise, source-linked view for reading
+and comparing company results. Do not refresh an old visual report with stale
+thesis data during an unrelated routine task.
 
 ---
 

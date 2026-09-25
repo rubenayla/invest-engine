@@ -112,3 +112,7 @@ At 03:08 CEST on y540, cron invoked the 02:30 politician-data job; its log compl
 ## 2026-09-24 — Scheduled-job monitor found the same site method mismatch
 
 At 03:08 CEST on y540, the 02:30 politician-data job completed with exit 0: 3 documents processed, 4 trades parsed, 4 inserted, and 0 errors. The 04:00 backup and 05:00 update were still pending as expected. The investment database resolved to `localhost:5432/invest`; the latest completed update exited 0 on 2026-09-23 and wrote 1,809 current-stock rows, 16,110 valuation rows, and 1,934 scanner-history rows that day. The latest backup was 58.1 MB from 2026-09-23, and the preceding dumps increased from 57.7 MB to 58.1 MB. Both services were active. GET returned 200, but POST returned 405 instead of the required 401. The existing follow-up remains in `tasks.md`.
+
+## 2026-09-26 — Visual briefs added to company research
+
+The `research-company` skill now pairs each newly written or materially refreshed company thesis with a self-contained HTML visual report. The report consolidates dates and sources at the top, separates balance-sheet, revenue-and-profit, cash-flow and margin histories, and links brief risks and opportunities to their supporting detail. Existing theses are not batch-rendered because their underlying figures may be stale.
