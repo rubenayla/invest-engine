@@ -116,3 +116,7 @@ At 03:08 CEST on y540, the 02:30 politician-data job completed with exit 0: 3 do
 ## 2026-09-26 — Visual briefs added to company research
 
 The `research-company` skill now pairs each newly written or materially refreshed company thesis with a self-contained HTML visual report. The report consolidates dates and sources at the top, separates balance-sheet, revenue-and-profit, cash-flow and margin histories, and links brief risks and opportunities to their supporting detail. Existing theses are not batch-rendered because their underlying figures may be stale.
+
+## 2026-09-26 — Skip dashboard deployment for non-runtime changes
+
+A push containing only research-skill documentation ran the dashboard deployment job even though no application files had changed. The tests passed, but the Cloudflare SSH endpoint returned error 1033 before the remote deployment script ran. The CI workflow now checks the pushed file range and skips Cloudflare setup and deployment for changes outside the application, dashboard, models, infrastructure, scripts and runtime dependencies. The Y540 tunnel was unavailable from both its public endpoint and the documented LAN address during this check; application deployments remain dependent on restoring that host's connectivity.

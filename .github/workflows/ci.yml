@@ -51,8 +51,29 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether this push changes deployable files
+        id: deploy-scope
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          zero_sha=0000000000000000000000000000000000000000
+          if [[ "$BEFORE_SHA" == "$zero_sha" ]]; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          elif ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            echo "Could not find the push base commit $BEFORE_SHA; refusing to deploy." >&2
+            exit 1
+          elif git diff --quiet "$BEFORE_SHA" "$GITHUB_SHA" -- src/ scripts/ dashboard/ models/ infra/ pyproject.toml uv.lock; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "No deployable files changed; dashboard deployment skipped."
+          else
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install cloudflared
+        if: steps.deploy-scope.outputs.should_deploy == 'true'
         run: |
           mkdir -p "$HOME/bin"
           curl --fail --silent --show-error --location \
@@ -62,6 +83,7 @@ jobs:
           echo "$HOME/bin" >> "$GITHUB_PATH"
 
       - name: Configure SSH
+        if: steps.deploy-scope.outputs.should_deploy == 'true'
         env:
           Y540_SSH_KEY: ${{ secrets.Y540_SSH_KEY }}
           Y540_SSH_KNOWN_HOSTS: ${{ secrets.Y540_SSH_KNOWN_HOSTS }}
@@ -74,6 +96,7 @@ jobs:
           chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
 
       - name: Deploy to y540
+        if: steps.deploy-scope.outputs.should_deploy == 'true'
         run: |
           ssh \
             -o BatchMode=yes \

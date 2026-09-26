@@ -134,8 +134,10 @@ uv run python scripts/dashboard.py
 open dashboard/valuation_dashboard.html
 ```
 
-Pushes to `main` deploy the dashboard to y540 after CI passes. The deployment
-uses Cloudflare Access SSH and requires the repository secrets
+Pushes to `main` that change runtime files deploy the dashboard to y540 after CI
+passes. Documentation, research skills and other non-runtime changes run the
+tests without attempting a dashboard deployment. The deployment uses Cloudflare
+Access SSH and requires the repository secrets
 `Y540_SSH_KEY` and `Y540_SSH_KNOWN_HOSTS`.
 
 **Dashboard Features:**

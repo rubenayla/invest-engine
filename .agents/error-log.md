@@ -1,5 +1,11 @@
 <!-- consult-selectively: grep this file for the area of work; append dated entries. -->
 
+## 2026-09-26 — Skill-only push attempted an unnecessary dashboard deployment (gpt-6-luna)
+
+The visual-report skill update changed no dashboard runtime files, but pushing it to `main` still ran the deployment job. The test job passed; deployment failed before opening SSH because Cloudflare returned `websocket: bad handshake`. A read-only check from the Mac returned HTTP 530 / error 1033 for `ssh.rubenayla.xyz`, and the documented LAN route to y540 timed out. The remote deployment script did not run, so no dashboard code was deployed.
+
+The workflow ran deployment after tests on every `main` push, including documentation and skill changes. Before pushing a non-runtime change, run the repository checks locally. The deploy job now checks the pushed commit range and skips Cloudflare setup and SSH when no runtime files changed. Keep deployment gated on the successful test job, and report a deploy only after the remote health check confirms its commit.
+
 ## 2026-08-19 — Wrong PostgreSQL tunnel target (GPT-5)
 
 While preparing the insider snapshot backfill, the agent used the real `hetzner-db` SSH alias from the separate Partle workflow instead of the `y540-ubuntu` alias specified by this repository in `scripts/update_all.py:27`. The Hetzner server had PostgreSQL online but no `invest` database, so the agent incorrectly reported that the investment database was missing and delayed the backfill. The investment database was healthy on `y540-ubuntu` and had daily backups.
