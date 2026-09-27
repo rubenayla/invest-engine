@@ -1,8 +1,8 @@
 # Tasks
 
-## Restore the required unauthenticated POST response
+## Make the dashboard a private authenticated service
 
-- [ ] Investigate why `POST https://invest.rubenayla.xyz/` returns `405 Allow: HEAD, GET` instead of the required `401`; confirm the intended public-read/authenticated-write boundary at the proxy and application layers.
+- [ ] Keep `invest.rubenayla.xyz` behind authenticated access. The application currently has no authentication and exposes the full live research universe plus write endpoints that start or cancel data refreshes and create or delete price alarms. Bind the application to loopback only and enforce authentication at the proxy before restoring the public tunnel. A public read-only product, if wanted later, must be a separate static export with no account-specific research or writable endpoints.
 
 ## Re-run insider snapshot backfill against the investment database
 

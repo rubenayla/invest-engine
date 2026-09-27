@@ -120,3 +120,9 @@ The `research-company` skill now pairs each newly written or materially refreshe
 ## 2026-09-26 — Skip dashboard deployment for non-runtime changes
 
 A push containing only research-skill documentation ran the dashboard deployment job even though no application files had changed. The tests passed, but the Cloudflare SSH endpoint returned error 1033 before the remote deployment script ran. The CI workflow now checks the pushed file range and skips Cloudflare setup and deployment for changes outside the application, dashboard, models, infrastructure, scripts and runtime dependencies. The Y540 tunnel was unavailable from both its public endpoint and the documented LAN address during this check; application deployments remain dependent on restoring that host's connectivity.
+
+## 2026-09-28 — Dashboard access boundary
+
+The live dashboard server has no application authentication. Its unauthenticated routes return the complete live research universe, model outputs, insider history and company notes, and permit starting or cancelling data refreshes plus creating or deleting price alarms. The service defaults to binding on all IPv6 interfaces. The production hostname returned Cloudflare error 1033 during this check, so it was unavailable rather than safely protected.
+
+The dashboard should remain a private authenticated service: bind it to loopback and enforce identity-aware proxy authentication before the tunnel forwards traffic. If a public site becomes useful, publish a separate deliberately limited static export, with no personal or proprietary research and no endpoints that change state.
