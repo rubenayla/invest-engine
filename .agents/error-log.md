@@ -125,3 +125,9 @@ Prevention: a scanner's header is a compact control bar. Put the universe select
 The compact dashboard header still presented Feed, model documentation, and CSV export alongside the controls used to work through the opportunity list. This made occasional utilities compete with the universe selector, refresh actions, and reminders.
 
 Prevention: rank header actions by session frequency. Keep the universe selector, one update menu, reminders, and compact diagnostics visible; put Feed, model documentation, and CSV export in a conventional three-dots menu.
+
+## 2026-09-28 — Preserved a desktop model matrix as the default scanner view (GPT-5.6 Terra)
+
+The prototype kept thirteen wide columns, multiline valuation cells and a notes control inside every row. The ranked list overflowed horizontally and only a few opportunities fit vertically, so it resembled a spreadsheet rather than an investment work surface.
+
+Prevention: make the default view show only the columns needed to select a company for deeper research. Put complete model detail behind an explicit labelled control rather than consuming the main viewport.
