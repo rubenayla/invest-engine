@@ -101,3 +101,9 @@ Inspect live column types before composing timestamp and date predicates, becaus
 The NRG thesis said the company had reserved 5.4 GW of turbines and that all 5.4 GW would produce about $2.5B of recurring EBITDA. The filings distinguish a development agreement for up to 5.4 GW from turbine-slot reservations that reached 3.6 GW by the 2025 10-K; management later described full turbine and construction capacity as secured. The >$2.5B illustration covered roughly 6 GW, including existing-plant uprates, rather than only the 5.4 GW new-build pipeline.
 
 Classify every development pipeline by contractual and construction stage. Value completed cash flows only after showing the remaining capital, financing, delay and execution probability, and separate the completed project's gross value from the value created above construction cost.
+
+## 2026-09-27 — Supplied a filesystem path instead of a browser URL (GPT-5.6 Terra)
+
+After the hosted dashboard URL had already been confirmed unavailable, the agent gave a local filesystem path as a Markdown click target. Chrome resolved it as `dashboard/valuation_dashboard.html` and attempted a DNS lookup, producing `DNS_PROBE_FINISHED_NXDOMAIN`.
+
+Prevention: to hand over a local webpage, start a scoped localhost server, verify that the exact page returns HTTP 200, and give its `http://127.0.0.1:<port>/...` URL. Do not use a filesystem path as a browser link.
