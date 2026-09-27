@@ -107,3 +107,9 @@ Classify every development pipeline by contractual and construction stage. Value
 After the hosted dashboard URL had already been confirmed unavailable, the agent gave a local filesystem path as a Markdown click target. Chrome resolved it as `dashboard/valuation_dashboard.html` and attempted a DNS lookup, producing `DNS_PROBE_FINISHED_NXDOMAIN`.
 
 Prevention: to hand over a local webpage, start a scoped localhost server, verify that the exact page returns HTTP 200, and give its `http://127.0.0.1:<port>/...` URL. Do not use a filesystem path as a browser link.
+
+## 2026-09-27 — Let analysis-engine telemetry dominate the investment dashboard (GPT-5.6 Terra)
+
+The dashboard retained a large grid of stock and per-model run counts after the user had said that those numbers were only analysis-engine status. The grid occupied the visual centre of the page and competed with the ranked stock list, which is the investor's decision surface.
+
+Prevention: classify dashboard content by the investor decision it supports before assigning visual weight. Keep operational counts, health checks, and logs in collapsed diagnostics; reserve prominent space and large type for investment opportunities and their evidence. Follow `dashboard/frame.md` for future dashboard work.

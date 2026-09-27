@@ -86,3 +86,16 @@ def test_dashboard_css_follows_browser_color_scheme():
     assert '@media (prefers-color-scheme: light)' in css
     assert '--bg-base: #f6f8fa' in css
     assert '--bg-base: #111418' in css
+
+
+def test_model_coverage_is_diagnostic_not_dashboard_content():
+    dashboard = HTMLGenerator().generate_dashboard_html(
+        {"ONE": _stock(100, {"dcf": {"fair_value": 120}})},
+        {},
+    )
+
+    assert '<details class="dashboard-diagnostics">' in dashboard
+    assert '<summary>Analysis engine status</summary>' in dashboard
+    assert 'Model coverage' in dashboard
+    assert 'Analysis Summary' not in dashboard
+    assert '<details class="dashboard-diagnostics" open>' not in dashboard

@@ -130,7 +130,7 @@ class HTMLGenerator:
         </div>
 
         <details class="dashboard-diagnostics">
-            <summary>System status &amp; analysis summary</summary>
+            <summary>Analysis engine status</summary>
             {health_html}
             {summary_html}
         </details>
@@ -390,12 +390,12 @@ class HTMLGenerator:
             summary_items.append(f"<div class='summary-item'><strong>{count}</strong><br>{model_name}</div>")
 
         return f'''
-        <div class="analysis-summary">
-            <h2>📊 Analysis Summary</h2>
+        <section class="analysis-summary" aria-labelledby="model-coverage-title">
+            <h2 id="model-coverage-title">Model coverage</h2>
             <div class="summary-grid">
                 {''.join(summary_items)}
             </div>
-        </div>'''
+        </section>'''
 
     def _generate_stock_table(self, stocks_data: Dict) -> str:
         """Generate the stock analysis table."""
@@ -2463,18 +2463,11 @@ renderCards();
             .controls-left, .controls-right { flex-wrap: wrap; width: 100%; }
             .controls-right { justify-content: flex-start; }
 
-            /* ── Summary: collapsed by default on mobile ── */
-            .analysis-summary { padding: 4px 12px; margin-bottom: 4px; cursor: pointer; }
-            .analysis-summary h2::after {
-                content: '\\25BC'; font-size: 10px; color: var(--text-muted);
-                margin-left: 8px; transition: transform 0.2s;
-            }
-            .summary-grid { display: none; }
-            .analysis-summary.expanded .summary-grid { display: flex; flex-wrap: wrap; gap: 4px; }
-            .analysis-summary.expanded h2::after { transform: rotate(180deg); }
+            /* Model coverage stays inside the collapsed diagnostics section. */
+            .analysis-summary { padding: 4px 12px; margin-bottom: 4px; }
+            .summary-grid { display: flex; flex-wrap: wrap; gap: 4px; }
             .summary-item { min-width: auto; padding: 4px 8px; flex: 1 1 70px; }
-            .summary-item h3 { font-size: 16px; }
-            .summary-item p { font-size: 9px; }
+            .summary-item strong { font-size: 16px; }
 
             /* ── Table: the main event ── */
             .table-container {
@@ -2742,11 +2735,16 @@ renderCards();
             color: var(--text-primary); font-size: 11px; letter-spacing: 1.3px;
         }
         .universe-selector select, .universe-selector input { border-color: var(--border); border-radius: 3px; background: transparent; }
-        .analysis-summary { padding: 0 0 24px; margin-bottom: 24px; background: transparent; border: 0; border-bottom: 1px solid var(--border-subtle); border-radius: 0; }
-        .analysis-summary h2 { margin-bottom: 12px; }
-        .summary-grid { border: 1px solid var(--border-subtle); border-radius: 0; background: var(--border-subtle); }
-        .summary-item { min-width: 115px; padding: 15px 12px; background: var(--bg-base); color: var(--text-muted); text-align: left; }
-        .summary-item strong { color: var(--text-primary); font-family: var(--font-body); font-size: 25px; letter-spacing: -1px; }
+        .dashboard-diagnostics { margin-bottom: 24px; background: transparent; border: 0; border-bottom: 1px solid var(--border-subtle); border-radius: 0; }
+        .dashboard-diagnostics > summary { padding: 0 0 14px; color: var(--text-muted); font-family: var(--font-body); font-size: 11px; letter-spacing: 1.3px; }
+        .dashboard-diagnostics > summary:hover { color: var(--text-primary); }
+        .dashboard-diagnostics[open] > summary { border-bottom: 0; }
+        .dashboard-diagnostics .health-panel, .dashboard-diagnostics .analysis-summary { margin: 0 0 16px; }
+        .analysis-summary { padding: 0; margin-bottom: 0; background: transparent; border: 0; border-radius: 0; }
+        .analysis-summary h2 { margin-bottom: 10px; color: var(--text-muted); }
+        .summary-grid { display: flex; gap: 8px 18px; border: 0; border-radius: 0; background: transparent; }
+        .summary-item { min-width: auto; padding: 0; background: transparent; color: var(--text-muted); text-align: left; flex: 0 1 auto; }
+        .summary-item strong { display: inline; color: var(--text-primary); font-family: var(--font-body); font-size: 14px; letter-spacing: 0; }
         .stock-analysis h2 { margin-bottom: 12px; }
         .table-search-bar { padding: 0 0 12px !important; }
         .table-container { height: calc(100vh - 355px); border-color: var(--border-subtle); border-radius: 0; background: var(--bg-base); }
