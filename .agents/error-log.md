@@ -113,3 +113,9 @@ Prevention: to hand over a local webpage, start a scoped localhost server, verif
 The dashboard retained a large grid of stock and per-model run counts after the user had said that those numbers were only analysis-engine status. The grid occupied the visual centre of the page and competed with the ranked stock list, which is the investor's decision surface.
 
 Prevention: classify dashboard content by the investor decision it supports before assigning visual weight. Keep operational counts, health checks, and logs in collapsed diagnostics; reserve prominent space and large type for investment opportunities and their evidence. Follow `dashboard/frame.md` for future dashboard work.
+
+## 2026-09-27 — Made the investment scanner header into a hero section (GPT-5.6 Terra)
+
+The first dashboard comparison used oversized title typography, a tall header, and a separate controls row. The user correctly noted that the first half of the screen carried little decision value. The default was also S&P 500, which hid the combined research universe.
+
+Prevention: a scanner's header is a compact control bar. Put the universe selector, update actions, and secondary tools in it; take the user to the ranked table immediately. Default this dashboard to All Universes Combined unless a task explicitly calls for a narrower default.
