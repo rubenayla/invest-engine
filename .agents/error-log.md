@@ -119,3 +119,9 @@ Prevention: classify dashboard content by the investor decision it supports befo
 The first dashboard comparison used oversized title typography, a tall header, and a separate controls row. The user correctly noted that the first half of the screen carried little decision value. The default was also S&P 500, which hid the combined research universe.
 
 Prevention: a scanner's header is a compact control bar. Put the universe selector, update actions, and secondary tools in it; take the user to the ranked table immediately. Default this dashboard to All Universes Combined unless a task explicitly calls for a narrower default.
+
+## 2026-09-27 — Exposed secondary dashboard utilities as primary actions (GPT-5.6 Terra)
+
+The compact dashboard header still presented Feed, model documentation, and CSV export alongside the controls used to work through the opportunity list. This made occasional utilities compete with the universe selector, refresh actions, and reminders.
+
+Prevention: rank header actions by session frequency. Keep the universe selector, one update menu, reminders, and compact diagnostics visible; put Feed, model documentation, and CSV export in a conventional three-dots menu.
