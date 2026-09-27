@@ -2675,7 +2675,106 @@ renderCards();
             padding: 20px 24px; border-bottom: 1px solid var(--border, #2a3040);
         }
         .alarm-panel-header h3 { font-size: 16px; color: var(--text-primary, #e0e6ed); margin: 0; }
-        .alarm-panel-list { padding: 12px; }"""
+        .alarm-panel-list { padding: 12px; }
+
+        /* ── Editorial dashboard skin ────────────────────────────────────
+           Match the local company briefs while preserving the scanner's
+           dense, sortable table and server controls. */
+        :root {
+            --bg-base: #f5f5ee;
+            --bg-panel: #f5f5ee;
+            --bg-elevated: #eef0e8;
+            --bg-hover: #e4e9df;
+            --bg-row-alt: #f0f2eb;
+            --border: #b7c3b7;
+            --border-subtle: #d4dcd0;
+            --border-glow: #17342d;
+            --text-primary: #17342d;
+            --text-secondary: #40564c;
+            --text-muted: #5e6d65;
+            --accent: #28765b;
+            --accent-bright: #17342d;
+            --accent-dim: #dfe9dd;
+            --gold: #80591c;
+            --gold-dim: #eee5cf;
+            --green: #28765b;
+            --green-bright: #28765b;
+            --green-dim: #dfe9dd;
+            --red: #9d443c;
+            --red-bright: #9d443c;
+            --red-dim: #f3dfda;
+            --orange: #ac653c;
+            --orange-dim: #f2e4d9;
+            --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+        }
+        body { background: var(--bg-base); }
+        .container { max-width: 1480px; margin: 0 auto; padding: 32px 46px 56px; }
+        .dashboard-header {
+            position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+            gap: 24px; margin-bottom: 28px; padding: 0 0 22px;
+            background: transparent; border: 0; border-top: 0;
+            border-bottom: 1px solid var(--text-primary); border-radius: 0;
+        }
+        .dashboard-header::before {
+            content: 'invest / opportunity dashboard'; position: absolute; top: 0; left: 0;
+            color: var(--text-primary); font-size: 11px; font-weight: 700;
+            letter-spacing: 1.5px; text-transform: uppercase;
+        }
+        .dashboard-header h1 {
+            margin-top: 25px; font-family: var(--font-body); font-size: clamp(34px, 4vw, 54px);
+            font-weight: 700; letter-spacing: -2.2px; line-height: 1; text-transform: none;
+        }
+        .header-row { margin: 0; flex-direction: column; align-items: flex-end; justify-content: flex-end; gap: 13px; }
+        .last-updated { font-size: 12px; text-align: right; }
+        .header-actions { gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+        .btn {
+            border-color: var(--line, var(--border-subtle)); border-radius: 3px; padding: 7px 12px;
+            background: transparent; color: var(--text-primary); font-size: 12px; font-weight: 600;
+        }
+        .btn:hover { background: var(--bg-elevated); border-color: var(--text-primary); color: var(--text-primary); }
+        .btn-update { background: var(--text-primary); border-color: var(--text-primary); color: var(--bg-base); }
+        .btn-update:hover { background: var(--accent); border-color: var(--accent); color: var(--bg-base); }
+        .btn-lite-update { color: var(--text-primary); border-color: var(--text-primary); }
+        .btn-lite-update:hover { background: var(--text-primary); color: var(--bg-base); }
+        .controls { margin-bottom: 22px; padding: 0 0 18px; background: transparent; border: 0; border-bottom: 1px solid var(--border-subtle); border-radius: 0; }
+        .universe-selector label, .stock-analysis h2, .analysis-summary h2 {
+            color: var(--text-primary); font-size: 11px; letter-spacing: 1.3px;
+        }
+        .universe-selector select, .universe-selector input { border-color: var(--border); border-radius: 3px; background: transparent; }
+        .analysis-summary { padding: 0 0 24px; margin-bottom: 24px; background: transparent; border: 0; border-bottom: 1px solid var(--border-subtle); border-radius: 0; }
+        .analysis-summary h2 { margin-bottom: 12px; }
+        .summary-grid { border: 1px solid var(--border-subtle); border-radius: 0; background: var(--border-subtle); }
+        .summary-item { min-width: 115px; padding: 15px 12px; background: var(--bg-base); color: var(--text-muted); text-align: left; }
+        .summary-item strong { color: var(--text-primary); font-family: var(--font-body); font-size: 25px; letter-spacing: -1px; }
+        .stock-analysis h2 { margin-bottom: 12px; }
+        .table-search-bar { padding: 0 0 12px !important; }
+        .table-container { height: calc(100vh - 355px); border-color: var(--border-subtle); border-radius: 0; background: var(--bg-base); }
+        .stock-table { font-size: 14px; }
+        .stock-table th { padding: 12px 10px; background: var(--bg-base); color: var(--text-muted); border-bottom: 1px solid var(--text-primary); font-size: 10px; }
+        .stock-table td { padding: 11px 10px; border-bottom-color: var(--border-subtle); color: var(--text-primary); }
+        .stock-row:nth-child(even) { background: var(--bg-row-alt); }
+        .stock-row:hover { background: var(--bg-elevated); }
+        .ticker-link, .ticker-trigger { color: var(--text-primary); }
+        .notes-link { color: var(--accent); background: transparent; border-color: var(--border-subtle); border-radius: 2px; }
+        .margin { border-radius: 2px; }
+        .margin-neutral { background: var(--bg-elevated); }
+        .kebab-menu { background: var(--bg-base); border-color: var(--border); box-shadow: 0 12px 30px rgba(23, 52, 45, .16); }
+        .kebab-label { color: var(--text-muted); }
+        .kebab-item { color: var(--text-primary); }
+        .kebab-item:hover { background: var(--bg-elevated); }
+        .modal-overlay { background: rgba(23, 52, 45, .26); }
+        .modal-content, .alarm-panel { background: var(--bg-base); border-color: var(--border); }
+        @media (max-width: 768px) {
+            .container { padding: 22px 18px 40px; }
+            .dashboard-header { display: block; padding-bottom: 17px; margin-bottom: 20px; }
+            .dashboard-header h1 { display: block; font-size: 34px; }
+            .header-row { display: flex; margin-top: 18px; align-items: flex-start; }
+            .last-updated { display: block; text-align: left; }
+            .header-actions { justify-content: flex-start; }
+            .controls { padding-bottom: 14px; }
+            .table-container { height: calc(100dvh - 250px); }
+        }"""
 
     def _get_javascript(self) -> str:
         """Get JavaScript for dashboard interactivity."""
