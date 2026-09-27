@@ -18,6 +18,12 @@ After implementing the backfill, the agent reported that the live run was blocke
 
 Prevention: when the user asks to do the remaining operational step, execute it in the same turn before reporting status. Distinguish clearly between code being ready, a command being attempted, and a command completing with verified output.
 
+## 2026-09-27 — Offered a known-broken dashboard URL as the primary destination (GPT-5.6 Terra)
+
+The agent verified that `https://invest.rubenayla.xyz/` returned Cloudflare tunnel error 1033, then still told the user to use that address as the investment dashboard home. It also gave the local HTML file as an incomplete fallback link. This turned a verified outage into the recommended action.
+
+Prevention: after a URL check fails, lead with the working local route or state that no working route exists. Never present a failed endpoint as the primary link merely because it is the canonical production address.
+
 ## 2026-08-21 — Deploy job omitted repository checkout (GPT-5)
 
 The first GitHub Actions deployment run passed the test job but failed before SSH because the deploy job referenced `scripts/deploy_y540.sh` without checking out the repository. The workflow had checkout in the separate test job, but GitHub Actions jobs run on separate runners and do not share that workspace.
