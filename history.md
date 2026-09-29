@@ -126,3 +126,7 @@ A push containing only research-skill documentation ran the dashboard deployment
 The live dashboard server has no application authentication. Its unauthenticated routes return the complete live research universe, model outputs, insider history and company notes, and permit starting or cancelling data refreshes plus creating or deleting price alarms. The service defaults to binding on all IPv6 interfaces. The production hostname returned Cloudflare error 1033 during this check, so it was unavailable rather than safely protected.
 
 The dashboard should remain a private authenticated service: bind it to loopback and enforce identity-aware proxy authentication before the tunnel forwards traffic. If a public site becomes useful, publish a separate deliberately limited static export, with no personal or proprietary research and no endpoints that change state.
+
+## 2026-09-29 — Scheduled-job monitor blocked by y540 transport
+
+The live health check could not reach y540: `ssh y540-ubuntu` failed in the configured Cloudflare SSH proxy with `websocket: bad handshake`. Because the host was unreachable, the three cron logs, PostgreSQL row counts, backup freshness, and both service states were unverified. The public site also returned HTTP 530 for both GET and POST, so the expected 200/401 access boundary could not be checked. The required notification was sent with the SSH, log, database, service, and curl commands to rerun after the proxy recovers.
