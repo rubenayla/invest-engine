@@ -1,6 +1,11 @@
 # Tasks
 
 ## Make the dashboard a private authenticated service
+## Investigate why the three invest cron jobs stopped after 2026-09-24
+
+- [ ] The user crontab still contains the 02:30 politician fetch, 04:00 backup, and 05:00 update entries, and the cron service is active/enabled, but none has produced a log or database write since 2026-09-24. Inspect cron invocation and user-environment errors before rerunning any job.
+
+## Restore the required unauthenticated POST response
 
 - [ ] Keep `invest.rubenayla.xyz` behind authenticated access. The application currently has no authentication and exposes the full live research universe plus write endpoints that start or cancel data refreshes and create or delete price alarms. Bind the application to loopback only and enforce authentication at the proxy before restoring the public tunnel. A public read-only product, if wanted later, must be a separate static export with no account-specific research or writable endpoints.
 

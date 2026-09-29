@@ -5,6 +5,11 @@
 The visual-report skill update changed no dashboard runtime files, but pushing it to `main` still ran the deployment job. The test job passed; deployment failed before opening SSH because Cloudflare returned `websocket: bad handshake`. A read-only check from the Mac returned HTTP 530 / error 1033 for `ssh.rubenayla.xyz`, and the documented LAN route to y540 timed out. The remote deployment script did not run, so no dashboard code was deployed.
 
 The workflow ran deployment after tests on every `main` push, including documentation and skill changes. Before pushing a non-runtime change, run the repository checks locally. The deploy job now checks the pushed commit range and skips Cloudflare setup and SSH when no runtime files changed. Keep deployment gated on the successful test job, and report a deploy only after the remote health check confirms its commit.
+## 2026-09-29 — Tried the nonexistent y540 SSH alias before checking the local host (GPT-5.6 Luna)
+
+The scheduled-job monitor first attempted `ssh y540-ubuntu`, which failed because that hostname is not configured or resolvable in this environment. The session was already running on y540 (`hostname` returned `y540` and `/etc/hosts` mapped it locally), so the live checks needed to run locally.
+
+Prevention: check `hostname` and the repository's SSH configuration before choosing remote execution; if the target host is the current machine, run the diagnostic locally.
 
 ## 2026-08-19 — Wrong PostgreSQL tunnel target (GPT-5)
 
