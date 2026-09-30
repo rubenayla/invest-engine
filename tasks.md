@@ -3,7 +3,7 @@
 ## Make the dashboard a private authenticated service
 ## Investigate why the three invest cron jobs stopped after 2026-09-24
 
-- [ ] The user crontab still contains the 02:30 politician fetch, 04:00 backup, and 05:00 update entries, and the cron service is active/enabled, but none has produced a log or database write since 2026-09-24. Inspect cron invocation and user-environment errors before rerunning any job.
+- [ ] The user crontab still contains the 02:30 politician fetch, 04:00 backup, and 05:00 update entries, and the cron service is active/enabled. The 02:30 fetch ran on 2026-09-30, but cron has not invoked the 04:00 backup or 05:00 update since 2026-09-24. Some `current_stock_data` and `valuation_results` rows have 2026-09-29 timestamps, so those writes may come from a separate/manual run; `scanner_score_history` remains dated 2026-09-24. Inspect cron invocation and user-environment errors before rerunning any job.
 
 ## Restore the required unauthenticated POST response
 
