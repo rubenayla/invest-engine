@@ -1,5 +1,9 @@
 # Tasks
 
+## Repair the update queue failure and cron status reporting
+
+- [ ] Remove or repair the malformed pending LLM-verdict queue entry that makes `scripts/save_llm_verdict.py --flush-queue` raise `JSONDecodeError`, then rerun the lite update and verify fresh database timestamps and row counts. Update `/home/rubenayla/invest_cron.sh` so a failed `update_all.py` run is not logged as `exit 0` and does not look successful to this monitor.
+
 ## Make the dashboard a private authenticated service
 ## Investigate why the three invest cron jobs stopped after 2026-09-24
 
