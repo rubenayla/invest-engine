@@ -1,5 +1,11 @@
 <!-- consult-selectively: grep this file for the area of work; append dated entries. -->
 
+## 2026-10-01 — Printed a database credential during health verification (GPT-5.6 Luna)
+
+The scheduled-job health check printed the full database connection URL while verifying the live database, exposing its password in the tool transcript. The connection check itself was read-only and no credential was written to disk, but the output was unnecessarily sensitive.
+
+Prevention: never print `get_db_url()` or an unredacted `DB_URL` during operational checks; verify connectivity and print only the host, port and database name.
+
 ## 2026-09-26 — Skill-only push attempted an unnecessary dashboard deployment (gpt-6-luna)
 
 The visual-report skill update changed no dashboard runtime files, but pushing it to `main` still ran the deployment job. The test job passed; deployment failed before opening SSH because Cloudflare returned `websocket: bad handshake`. A read-only check from the Mac returned HTTP 530 / error 1033 for `ssh.rubenayla.xyz`, and the documented LAN route to y540 timed out. The remote deployment script did not run, so no dashboard code was deployed.
