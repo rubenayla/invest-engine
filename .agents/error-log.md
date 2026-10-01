@@ -142,3 +142,9 @@ Prevention: rank header actions by session frequency. Keep the universe selector
 The prototype kept thirteen wide columns, multiline valuation cells and a notes control inside every row. The ranked list overflowed horizontally and only a few opportunities fit vertically, so it resembled a spreadsheet rather than an investment work surface.
 
 Prevention: make the default view show only the columns needed to select a company for deeper research. Put complete model detail behind an explicit labelled control rather than consuming the main viewport.
+
+## 2026-10-01 — Ran the first scheduled-job probe on the wrong host (GPT-5.6 Luna)
+
+The monitor initially ran its checks on the local MacBook Air, whose hostname was `mba` and whose crontab was unrelated to invest. The same command also stopped early because zsh expanded the unmatched `~/invest-cron-*.log` glob. The configured `y540-ubuntu` SSH route was available, so the check was rerun there and completed.
+
+Prevention: verify `hostname` and the Europe/Madrid time on the target before reading job state; use a nullglob-safe shell or Bash when probing optional log paths. Do not infer y540 state from the workstation.

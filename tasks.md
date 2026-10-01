@@ -8,6 +8,7 @@
 ## Investigate why the three invest cron jobs stopped after 2026-09-24
 
 - [ ] The user crontab still contains the 02:30 politician fetch, 04:00 backup, and 05:00 update entries, and the cron service is active/enabled. The politician fetch ran on 2026-10-01 but logged a DNS failure; the 04:00 backup ran on 2026-09-30 and produced a 56 MB dump; and the 05:00 update ran on 2026-09-30 but failed while flushing the pending LLM verdict queue on invalid JSON. The update wrapper incorrectly logged exit 0 after the traceback. Database writes remain stale (`current_stock_data` and `valuation_results` at 2026-09-29; `scanner_score_history` at 2026-09-24). Confirm and repair the malformed queue entry and the update wrapper's exit-status handling before rerunning the scheduled update.
+- [ ] On 2026-10-01 cron invoked all three jobs. The politician fetch logged a DNS resolution error but then reported no new PTRs without a reliable exit status; the backup completed and wrote a 58M dump; the update failed in `save_llm_verdict.py --flush-queue` before its data-writing stages, while `invest_cron.sh` still logged exit 0. `current_stock_data` and `scanner_score_history` remain frozen at 2026-09-29 and 2026-09-24 respectively.
 
 ## Restore the required unauthenticated POST response
 
