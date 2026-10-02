@@ -148,3 +148,9 @@ Prevention: make the default view show only the columns needed to select a compa
 The monitor initially ran its checks on the local MacBook Air, whose hostname was `mba` and whose crontab was unrelated to invest. The same command also stopped early because zsh expanded the unmatched `~/invest-cron-*.log` glob. The configured `y540-ubuntu` SSH route was available, so the check was rerun there and completed.
 
 Prevention: verify `hostname` and the Europe/Madrid time on the target before reading job state; use a nullglob-safe shell or Bash when probing optional log paths. Do not infer y540 state from the workstation.
+
+## 2026-10-02 — Used unavailable remote tooling and an unsafe local glob during the scheduled monitor (gpt-5.6-luna)
+
+The first remote diagnostic used `rg`, which is not installed on y540, so the crontab and journal checks were skipped. The first local diagnostic used an unmatched zsh glob for `~/invest-cron-*.log`, which stopped the command before the remaining checks. No data or service state changed, and the checks were rerun successfully with `grep`, `find`, and a Bash nullglob-safe loop.
+
+Prevention: use tools confirmed on the target host, and run optional log-file probes under Bash with an existence check rather than relying on zsh glob expansion.
