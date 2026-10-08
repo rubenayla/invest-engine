@@ -154,3 +154,9 @@ Prevention: verify `hostname` and the Europe/Madrid time on the target before re
 The first remote diagnostic used `rg`, which is not installed on y540, so the crontab and journal checks were skipped. The first local diagnostic used an unmatched zsh glob for `~/invest-cron-*.log`, which stopped the command before the remaining checks. No data or service state changed, and the checks were rerun successfully with `grep`, `find`, and a Bash nullglob-safe loop.
 
 Prevention: use tools confirmed on the target host, and run optional log-file probes under Bash with an existence check rather than relying on zsh glob expansion.
+
+## 2026-10-08 — Wrote a malformed remote probe before the scheduled monitor completed (gpt-5.6-luna)
+
+The first y540 diagnostic used a Bash log-file array with a missing closing quote. Bash stopped at `unexpected EOF while looking for matching '"'` after printing the crontab, so the logs, database, services, and site checks had to be rerun.
+
+Prevention: keep the remote probe in a quoted heredoc, syntax-check or run the smallest shell fragment first, and do not treat partial probe output as a completed health check.
