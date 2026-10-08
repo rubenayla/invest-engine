@@ -160,3 +160,10 @@ Prevention: use tools confirmed on the target host, and run optional log-file pr
 The first y540 diagnostic used a Bash log-file array with a missing closing quote. Bash stopped at `unexpected EOF while looking for matching '"'` after printing the crontab, so the logs, database, services, and site checks had to be rerun.
 
 Prevention: keep the remote probe in a quoted heredoc, syntax-check or run the smallest shell fragment first, and do not treat partial probe output as a completed health check.
+
+
+## 2026-10-08 — Private-company collector and evidence validation defects (gpt-6.1-sol)
+
+The first Form D parser normalized archive filenames to uppercase but compared them with a mixed-case suffix, rejecting valid archives. New source tests exposed the mismatch before release. The review also found that equal numeric assertions such as integer 100 and float 100.0 appeared contradictory, and corrupt ZIP files escaped the command-line error handler. All three defects were corrected and regression checks pass.
+
+Prevention: exercise a real official archive and synthetic invalid archives before shipping a collector; normalize both sides of filename comparisons; compare numeric financial assertions by value while keeping booleans distinct; handle archive-specific exceptions explicitly. The disposable PostgreSQL cluster also required explicit UTF-8 encoding for non-ASCII company names; locale-free initialization alone used ASCII.

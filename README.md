@@ -187,6 +187,12 @@ The framework includes several pre-built strategies:
 
 All configurations can be customized to match your investment criteria.
 
+## Private-company research
+
+Startups and established private businesses have a separate collection and evidence-screening pipeline, using dedicated tables in the same PostgreSQL database. The public dashboard includes a private-company directory with separate type filters; confidential research stays in the private vault.
+
+Start with `uv run private-companies --help`. Setup, official SEC collection, reviewed JSON imports, Markdown dossiers and visibility controls are documented in [the private-company module](src/invest/private_companies/README.md).
+
 ## Deep Company Analysis
 
 For individual stock deep dives (beyond the scanner), use the analysis methodology:

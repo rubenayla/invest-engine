@@ -47,6 +47,7 @@ docs = [
 ]
 
 [project.scripts]
+private-companies = "invest.private_companies.cli:main"
 systematic-invest = "scripts.systematic_analysis:main"
 
 [build-system]

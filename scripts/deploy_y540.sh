@@ -21,6 +21,7 @@ echo "Deploying invest from $before to $after"
 # Keep the remote environment aligned with the lockfile before restarting the
 # long-running user service.
 uv sync --frozen
+uv run private-companies init-db
 uv run python scripts/dashboard.py
 systemctl --user restart invest-dashboard.service
 

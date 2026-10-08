@@ -36,6 +36,7 @@ LOG_PATH = REPO_ROOT / "logs" / "update_server.log"
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from invest.data.db import get_connection
+from invest.private_companies.dashboard import add_navigation, public_company, render_directory
 
 logger = logging.getLogger("dashboard_server")
 
@@ -454,7 +455,7 @@ async def index(request: Request) -> HTMLResponse:
         "health": health,
         "update_status": update_manager.status_dict,
     }
-    html = generator.generate_dashboard_html(stocks_data, progress_data, metadata)
+    html = add_navigation(generator.generate_dashboard_html(stocks_data, progress_data, metadata))
     return HTMLResponse(html, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
 
 
@@ -465,8 +466,47 @@ async def mobile_index(request: Request) -> HTMLResponse:
 
     stocks_data, _, _ = snapshot_cache.get()
     generator = HTMLGenerator()
-    html = generator.generate_mobile_html(stocks_data)
+    html = add_navigation(generator.generate_mobile_html(stocks_data), mobile=True)
     return HTMLResponse(html, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
+
+
+def _load_private_companies() -> tuple[list[dict], str]:
+    """Read only explicitly publishable records; never expose raw DB errors."""
+    from psycopg2.errors import UndefinedTable
+
+    from invest.private_companies.repository import list_companies
+
+    try:
+        records = list_companies(public_only=True)
+        companies = [projected for record in records
+                     if (projected := public_company(record)) is not None]
+        return companies, "ready"
+    except UndefinedTable:
+        return [], "not_initialized"
+    except Exception:
+        # Database exceptions may contain credentials or private record values.
+        logger.warning("Private-company directory database unavailable")
+        return [], "unavailable"
+
+
+async def private_companies_index(request: Request) -> HTMLResponse:
+    _touch_activity()
+    companies, state = _load_private_companies()
+    company_type = request.query_params.get("type", "all")
+    if company_type not in {"all", "startup", "established", "unclassified"}:
+        return PlainTextResponse("Unknown opportunity type", status_code=400)
+    html = render_directory(companies, state=state, company_type=company_type,
+                            query=request.query_params.get("q", ""))
+    return HTMLResponse(html, status_code=503 if state == "unavailable" else 200,
+                        headers={"Cache-Control": "no-store"})
+
+
+async def api_private_companies(request: Request) -> JSONResponse:
+    _touch_activity()
+    companies, state = _load_private_companies()
+    return JSONResponse({"status": state, "companies": companies},
+                        status_code=503 if state == "unavailable" else 200,
+                        headers={"Cache-Control": "no-store"})
 
 
 async def api_stocks(request: Request) -> JSONResponse:
@@ -845,6 +885,8 @@ app = Starlette(
     routes=[
         Route("/", index),
         Route("/m", mobile_index),
+        Route("/private-companies", private_companies_index),
+        Route("/api/private-companies", api_private_companies),
         Route("/api/stocks", api_stocks),
         Route("/api/health", api_health),
         Route("/api/update", api_update_start, methods=["POST"]),

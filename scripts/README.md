@@ -20,3 +20,7 @@ This folder contains the repo's runnable entrypoints (things we intentionally ke
 - `scripts/setup-githooks.sh`
 - `scripts/package_for_training.sh`
 - `scripts/receive_trained_models.sh`
+
+## Private companies
+
+`uv run private-companies` is the package entry point for schema setup, SEC Form D collection, reviewed imports, evidence checks and private Markdown dossiers. See [the module workflow](../src/invest/private_companies/README.md). `scripts/create_private_companies_schema.sql` creates separate tables in the existing PostgreSQL database.
