@@ -38,7 +38,6 @@ The `.claude/` folder contains **ONLY persistent project knowledge**:
 - `dashboard/` - Dashboard HTML/JS/CSS
 - `models/` - ML models (neural_network/, backtesting/, autoresearch/)
 
-- `infra/` - Infrastructure configs (grafana/)
 - `config/` - Configuration files
 - `~/vault/finance/notes/` - Research notes (live in the private vault, not this repo)
 - `reports/` - Generated reports

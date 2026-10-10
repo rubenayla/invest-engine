@@ -223,7 +223,6 @@ models/                  # ML model code
 data/                    # SQLite database + raw data
 dashboard/               # HTML dashboard + scanner YAML configs
 docs/                    # MkDocs documentation site
-infra/                   # Infrastructure (Grafana)
 logs/                    # Runtime logs
 ```
 
