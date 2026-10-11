@@ -1,5 +1,11 @@
 <!-- consult-selectively: grep this file for the area of work; append dated entries. -->
 
+## 2026-10-11 — Scheduled invest health check found masked update failure and POST status drift
+
+The y540 update cron for 2026-10-11 stopped immediately in `save_llm_verdict.py` because its pending-verdict queue contained a malformed JSON line. The wrapper still logged `END (exit 0)` because the cron command pipes output through `tee` without preserving the upstream exit status. The public dashboard GET returned 200, but POST to `/` returned 405 instead of the health contract's expected 401. The politician fetch completed with exit-success behavior and the backup completed a 56M dump; the database was reachable on localhost:5432 and `valuation_results` contained rows through 2026-10-11 03:14.
+
+Prevention: inspect the queue contents and fix or quarantine the malformed line before rerunning the update; make the cron wrapper preserve the pipeline exit status; verify which write endpoint should return 401 and update either the endpoint or the monitor contract after confirming the intended authenticated-write route.
+
 ## 2026-10-01 — Printed a database credential during health verification (GPT-5.6 Luna)
 
 The scheduled-job health check printed the full database connection URL while verifying the live database, exposing its password in the tool transcript. The connection check itself was read-only and no credential was written to disk, but the output was unnecessarily sensitive.
