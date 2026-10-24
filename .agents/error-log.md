@@ -167,6 +167,12 @@ The first y540 diagnostic used a Bash log-file array with a missing closing quot
 
 Prevention: keep the remote probe in a quoted heredoc, syntax-check or run the smallest shell fragment first, and do not treat partial probe output as a completed health check.
 
+## 2026-10-24 — Started the scheduled-job probe on the workstation (GPT-5.6 Luna)
+
+The first diagnostic ran on the MacBook Air (`mba`) instead of y540, so it read the unrelated local crontab and stopped before the optional log loop because zsh expanded an unmatched `~/invest-cron-*.log` glob. The configured `y540-ubuntu` route then failed with `websocket: bad handshake`, so the live state could not be checked in this run.
+
+Prevention: verify the target hostname and Europe/Madrid time before reading any job state; use the configured y540 SSH route first, and run optional log probes under Bash with nullglob or explicit file-existence checks.
+
 
 ## 2026-10-08 — Private-company collector and evidence validation defects (gpt-6.1-sol)
 
