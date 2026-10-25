@@ -196,3 +196,7 @@ At 05:23 CEST on y540, the 02:30 politician fetch completed with 4 documents, 3 
 ## 2026-10-22 — Scheduled-job monitor blocked by y540 transport
 
 At 07:33 CEST, the configured SSH path to y540 (`y540-ubuntu` through the Cloudflare SSH proxy) failed with `websocket: bad handshake`. A direct SSH attempt to `ssh.rubenayla.xyz:22` failed with `No route to host`. Consequently, the three cron logs, exit statuses, backup freshness, PostgreSQL row growth, and both service states were unverified. From the Mac, `https://invest.rubenayla.xyz/` returned HTTP 530 for both GET and POST, so the expected 200/401 access boundary was also unavailable. The required notification was sent with the exact SSH, log, database, service, and curl checks to rerun after y540 connectivity is restored.
+
+## 2026-10-25 — Scheduled-job monitor blocked by y540 transport
+
+The configured `y540-ubuntu` SSH route failed before any remote command ran with `websocket: bad handshake`. From the Mac, `https://invest.rubenayla.xyz/` returned HTTP 530 for both GET and POST. Therefore the three cron logs and exit statuses, backup freshness, PostgreSQL row growth, and `invest-dashboard` and `cloudflared` service states were unverified. The required notification was sent with the transport failure and the SSH and curl checks to rerun after connectivity is restored.
