@@ -173,6 +173,12 @@ The first diagnostic ran on the MacBook Air (`mba`) instead of y540, so it read 
 
 Prevention: verify the target hostname and Europe/Madrid time before reading any job state; use the configured y540 SSH route first, and run optional log probes under Bash with nullglob or explicit file-existence checks.
 
+## 2026-10-26 — Scheduled invest health check found a masked update failure and write-route drift (GPT-5.6 Luna)
+
+The y540 update cron ran at 05:00 and its log ended with `END (exit 0)`, but the run stopped before fetching data because `save_llm_verdict.py --flush-queue` hit `JSONDecodeError: Expecting value`. The queue file contained Git conflict markers on lines 1, 5 and 6. `valuation_results` and `current_stock_data` therefore remained at 2026-10-15, while the politician fetch completed at 02:30 with 11 inserted trades and the 04:00 backup produced a valid 56M gzip from the database on localhost:5432. The public dashboard GET returned 200, but POST to `/` returned 405 with `Allow: HEAD, GET`, not the monitor contract's expected 401; both `invest-dashboard` and `cloudflared` were active.
+
+Prevention: do not treat the wrapper's logged exit value as the upstream update status until the wrapper preserves the Python process exit code; validate the pending verdict queue before rerunning the update. Confirm the intended authenticated write endpoint and either restore its 401 response or update the monitor contract after that route is verified.
+
 
 ## 2026-10-08 — Private-company collector and evidence validation defects (gpt-6.1-sol)
 
