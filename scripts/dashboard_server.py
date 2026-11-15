@@ -36,7 +36,10 @@ LOG_PATH = REPO_ROOT / "logs" / "update_server.log"
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from invest.data.db import get_connection
-from invest.private_companies.dashboard import add_navigation, public_company, render_directory
+try:
+    from invest.private_companies.dashboard import add_navigation, public_company, render_directory
+except ImportError:
+    add_navigation = public_company = render_directory = None
 
 logger = logging.getLogger("dashboard_server")
 
@@ -785,6 +788,8 @@ async def api_notes(request: Request):
     # Folder layout takes priority (TICKER/thesis.md), then flat (TICKER.md).
     folder_path = NOTES_DIR / ticker / "thesis.md"
     flat_path = NOTES_DIR / f"{ticker}.md"
+    has_visual = (NOTES_DIR / ticker / "visual-report.html").is_file()
+
     if folder_path.is_file():
         md_path = folder_path
     elif flat_path.is_file():
@@ -804,6 +809,8 @@ async def api_notes(request: Request):
         )
 
     content = md_path.read_text(encoding="utf-8")
+    header_bar = _build_notes_header_html(ticker, content, has_visual_report=has_visual)
+
     # Simple markdown-to-HTML: use Python markdown if available, else serve raw
     try:
         import markdown
@@ -822,8 +829,8 @@ async def api_notes(request: Request):
         f"@media (prefers-color-scheme: dark) {{ :root {{ --background:#0d1117; --foreground:#e0e6ed; "
         f"--heading:#58a6ff; --border:#30363d; --surface:#161b22; --strong:#f0f6fc; }} }}"
         f"body {{ background:var(--background); color:var(--foreground); font-family:system-ui,-apple-system,sans-serif; "
-        f"font-size:20px; padding:56px 80px; max-width:1060px; margin:0 auto; line-height:1.8; }}"
-        f"h1 {{ color:var(--heading); font-size:2.4em; margin-top:1.6em; margin-bottom:0.6em; font-weight:700; "
+        f"font-size:20px; padding:48px 64px; max-width:1100px; margin:0 auto; line-height:1.8; }}"
+        f"h1 {{ color:var(--heading); font-size:2.4em; margin-top:1.2em; margin-bottom:0.6em; font-weight:700; "
         f"border-bottom:1px solid var(--border); padding-bottom:0.3em; }}"
         f"h2 {{ color:var(--heading); font-size:1.7em; margin-top:1.5em; margin-bottom:0.5em; font-weight:600; }}"
         f"h3 {{ color:var(--heading); font-size:1.3em; margin-top:1.3em; margin-bottom:0.4em; font-weight:600; }}"
@@ -837,12 +844,119 @@ async def api_notes(request: Request):
         f"th,td {{ border:1px solid var(--border); padding:12px 16px; text-align:left; }}"
         f"th {{ background:var(--surface); font-weight:600; color:var(--strong); }}"
         f"tr:hover {{ background:rgba(88,166,255,0.04); }}"
-        f"@media(max-width:700px){{ body {{ padding:24px 18px; font-size:18px; }} }}"
-        f".back-link {{ display:inline-block; margin-bottom:24px; padding:8px 12px; border:1px solid var(--border); border-radius:6px; color:var(--heading); text-decoration:none; font-size:14px; line-height:1.2; }}"
-        f".back-link:hover {{ background:var(--surface); }}"
-        f"</style></head><body><a class='back-link' href='/'>← Back to dashboard</a>{body}</body></html>"
+        f"@media(max-width:700px){{ body {{ padding:20px 14px; font-size:17px; }} }}"
+        f".note-toolbar {{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:28px; padding-bottom:18px; border-bottom:1px solid var(--border); }}"
+        f".toolbar-left, .toolbar-right {{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }}"
+        f".nav-btn {{ display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border:1px solid var(--border); border-radius:6px; color:var(--heading); text-decoration:none; font-size:13px; font-weight:500; line-height:1.2; background:var(--surface); transition:background 0.15s, border-color 0.15s; }}"
+        f".nav-btn:hover {{ background:rgba(88,166,255,0.12); border-color:var(--heading); color:var(--heading); }}"
+        f".nav-btn.back-btn {{ font-weight:600; }}"
+        f".nav-btn.highlight-btn {{ background:var(--heading); color:#fff; border-color:var(--heading); }}"
+        f".nav-btn.highlight-btn:hover {{ opacity:0.9; color:#fff; }}"
+        f"</style></head><body>{header_bar}{body}</body></html>"
     )
     return HTMLResponse(html)
+
+
+def _build_notes_header_html(ticker: str, content: str, has_visual_report: bool = False) -> str:
+    """Build a clean action bar with links to external resources for the company."""
+    import re
+    import urllib.parse
+
+    # 1. Company name from markdown header: "# Company Name (TICKER)"
+    m_title = re.search(r"^#\s+([^\n(]+)", content, re.MULTILINE)
+    company_name = m_title.group(1).strip() if m_title else ticker
+
+    # 2. Extract official website & investor relations links if present in note
+    m_web = re.search(r"\[(?:Official\s+)?Website\]\((https?://[^\)]+)\)", content, re.IGNORECASE)
+    website_url = m_web.group(1) if m_web else None
+
+    m_ir = re.search(r"\[(?:Investor\s+Relations|IR|Shareholder)\s*[^\]]*\]\((https?://[^\)]+)\)", content, re.IGNORECASE)
+    ir_url = m_ir.group(1) if m_ir else None
+
+    # Secondary heuristic: look for investor.<domain> or ir.<domain> in text
+    if not ir_url:
+        m_ir_auto = re.search(r"(https?://(?:investor|ir)\.[a-zA-Z0-9.-]+[a-zA-Z0-9/_-]*)", content)
+        if m_ir_auto:
+            ir_url = m_ir_auto.group(1).rstrip(".,;)")
+
+    # Secondary heuristic for website: check data/stock_cache if present
+    if not website_url:
+        cache_file = REPO_ROOT / "data" / "stock_cache" / f"{ticker}.json"
+        if cache_file.is_file():
+            try:
+                import json
+                cdata = json.loads(cache_file.read_text(encoding="utf-8"))
+                website_url = cdata.get("info", {}).get("website")
+                if not ir_url:
+                    ir_url = cdata.get("info", {}).get("irWebsite")
+            except Exception:
+                pass
+
+    encoded_name = urllib.parse.quote_plus(company_name)
+    encoded_ticker = urllib.parse.quote_plus(ticker)
+
+    # Fallbacks if still not found
+    if not website_url:
+        website_url = f"https://www.google.com/search?q={encoded_name}+official+website"
+        web_label = "🌐 Search Website"
+    else:
+        web_label = "🌐 Website"
+
+    if not ir_url:
+        ir_url = f"https://www.google.com/search?q={encoded_name}+investor+relations"
+        ir_label = "📑 Search IR"
+    else:
+        ir_label = "📑 Investor Relations"
+
+    # Regulatory filings portal
+    if ticker.endswith(".MC"):
+        clean_t = ticker.replace(".MC", "")
+        filings_url = f"https://www.cnmv.es/portal/Consultas/DerechosVoto/Buscador.aspx?q={clean_t}"
+        filings_label = "🏛️ CNMV Filings"
+    elif ticker.endswith(".T"):
+        filings_url = f"https://www.google.com/search?q={ticker}+EDINET+filings"
+        filings_label = "🏛️ EDINET Filings"
+    elif "." not in ticker or ticker.endswith(".US"):
+        clean_t = ticker.replace(".US", "")
+        filings_url = f"https://www.sec.gov/edgar/searchedgar/companysearch?companyName={clean_t}"
+        filings_label = "🏛️ SEC Filings"
+    else:
+        filings_url = f"https://www.google.com/search?q={encoded_ticker}+{encoded_name}+financial+filings"
+        filings_label = "🏛️ Filings"
+
+    visual_btn = ""
+    if has_visual_report:
+        visual_btn = f"<a class='nav-btn highlight-btn' href='/api/notes/{ticker}/visual' target='_blank'>🎨 Visual Companion</a>"
+
+    return (
+        f"<div class='note-toolbar'>"
+        f"<div class='toolbar-left'>"
+        f"<a class='nav-btn back-btn' href='/'>← Dashboard</a>"
+        f"{visual_btn}"
+        f"</div>"
+        f"<div class='toolbar-right'>"
+        f"<a class='nav-btn' href='{website_url}' target='_blank' rel='noopener'>{web_label}</a>"
+        f"<a class='nav-btn' href='{ir_url}' target='_blank' rel='noopener'>{ir_label}</a>"
+        f"<a class='nav-btn' href='https://app.tikr.com/stock/about?ticker={ticker}' target='_blank' rel='noopener'>📈 TIKR</a>"
+        f"<a class='nav-btn' href='https://finance.yahoo.com/quote/{ticker}' target='_blank' rel='noopener'>📊 Yahoo Finance</a>"
+        f"<a class='nav-btn' href='https://www.google.com/finance/quote/{ticker}' target='_blank' rel='noopener'>🔍 Google Finance</a>"
+        f"<a class='nav-btn' href='https://www.tradingview.com/symbols/{ticker}/' target='_blank' rel='noopener'>📉 TradingView</a>"
+        f"<a class='nav-btn' href='{filings_url}' target='_blank' rel='noopener'>{filings_label}</a>"
+        f"</div>"
+        f"</div>"
+    )
+
+
+async def api_visual_report(request: Request):
+    """Serve a company visual-report.html companion file if it exists."""
+    import re
+    ticker = request.path_params["ticker"].upper()
+    if not re.match(r"^[A-Z0-9._-]+$", ticker):
+        return PlainTextResponse("Invalid ticker", status_code=400)
+    report_path = NOTES_DIR / ticker / "visual-report.html"
+    if not report_path.is_file():
+        return PlainTextResponse(f"No visual report found for {ticker}", status_code=404)
+    return HTMLResponse(report_path.read_text(encoding="utf-8"))
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
@@ -898,6 +1012,7 @@ app = Starlette(
         Route("/api/alarms/{alarm_id:int}", api_alarm_delete, methods=["DELETE"]),
         Route("/api/insider/{ticker}", api_insider_history),
         Route("/api/notes/{ticker}", api_notes),
+        Route("/api/notes/{ticker}/visual", api_visual_report),
     ],
 )
 
