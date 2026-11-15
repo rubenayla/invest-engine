@@ -147,6 +147,7 @@ def render_notes_page(
                 <button class="preset-btn" data-preset="margins">Margins</button>
               </div>
               <div class="plotter-actions-bar">
+                <span id="plotterCurrencyBadge" class="meta-pill" style="margin-right:8px;font-size:12px;font-weight:600;">Currency: USD</span>
                 <button id="plotterClearBtn" class="plotter-btn secondary-btn">Clear All</button>
                 <div class="plotter-type-group">
                   <button class="plotter-type-btn active" data-type="line">Line</button>
@@ -2365,12 +2366,17 @@ def _get_javascript() -> str:
         tableHtml += `<tr class="section-header-row"><td colspan="${years.length + 1}">▼ ${sec.title}</td></tr>`;
       }
 
+      const { symbol: currSym } = getCompanyCurrency();
       filteredRows.forEach(r => {
+        const isPct = isMetricPercent(r.name);
         tableHtml += `<tr class="stmt-row" data-metric="${r.name}" title="Click to plot in Cross-Plotter">`;
         tableHtml += `<td>${r.name} <span class="row-plot-hint">📈 plot</span></td>`;
         years.forEach(y => {
           const rawV = r.values[y];
-          tableHtml += `<td>${formatNumber(rawV, humanizeNumbers)}</td>`;
+          const cellVal = isPct
+            ? (formatNumber(rawV, humanizeNumbers) + (rawV !== null && rawV !== undefined && !isNaN(rawV) ? '%' : ''))
+            : formatNumber(rawV, humanizeNumbers, currSym);
+          tableHtml += `<td>${cellVal}</td>`;
         });
         tableHtml += '</tr>';
       });
@@ -2391,17 +2397,80 @@ def _get_javascript() -> str:
     });
   }
 
-  function formatNumber(v, humanize) {
+  function hexToRgba(hex, alpha = 1) {
+    if (!hex) return `rgba(88, 166, 255, ${alpha})`;
+    if (hex.startsWith('rgba')) return hex;
+    if (hex.startsWith('rgb(')) return hex.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+    let clean = hex.replace('#', '');
+    if (clean.length === 3) {
+      clean = clean.split('').map(c => c + c).join('');
+    }
+    const r = parseInt(clean.substring(0, 2), 16) || 0;
+    const g = parseInt(clean.substring(2, 4), 16) || 0;
+    const b = parseInt(clean.substring(4, 6), 16) || 0;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  function getCompanyCurrency() {
+    const data = tickerCacheData[currentTicker];
+    if (!data) return { code: 'USD', symbol: '$' };
+    const code = (
+      data.financial_statements_currency ||
+      data.info?.financialCurrency ||
+      data.info?.currency ||
+      'USD'
+    ).toUpperCase();
+
+    const symbols = {
+      EUR: '€',
+      USD: '$',
+      JPY: '¥',
+      GBP: '£',
+      CAD: 'CA$',
+      AUD: 'A$',
+      CHF: 'CHF ',
+      HKD: 'HK$',
+      CNY: '¥',
+      SEK: 'kr ',
+      NOK: 'kr ',
+      DKK: 'kr '
+    };
+
+    return {
+      code: code,
+      symbol: symbols[code] || (code + ' ')
+    };
+  }
+
+  function isMetricPercent(metricName) {
+    if (!metricName) return false;
+    const lower = metricName.toLowerCase();
+    return lower.includes('margin') ||
+           lower.includes('ratio') ||
+           lower.includes('rate') ||
+           lower.includes('yield') ||
+           lower.includes('%') ||
+           lower.includes('roe') ||
+           lower.includes('roa') ||
+           lower.includes('roic');
+  }
+
+  function formatNumber(v, humanize, currency = '') {
     if (v === null || v === undefined || isNaN(v)) return '--';
     const num = Number(v);
-    if (!humanize) return num.toLocaleString();
+    const prefix = currency ? currency : '';
+    if (!humanize) {
+      const sign = num < 0 ? '-' : '';
+      return `${sign}${prefix}${Math.abs(num).toLocaleString()}`;
+    }
 
     const abs = Math.abs(num);
-    if (abs >= 1e12) return (num / 1e12).toFixed(2) + 'T';
-    if (abs >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-    if (abs >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-    if (abs >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-    return num.toLocaleString();
+    const sign = num < 0 ? '-' : '';
+    if (abs >= 1e12) return `${sign}${prefix}${(abs / 1e12).toFixed(2)}T`;
+    if (abs >= 1e9) return `${sign}${prefix}${(abs / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}${prefix}${(abs / 1e6).toFixed(2)}M`;
+    if (abs >= 1e3) return `${sign}${prefix}${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}${prefix}${abs.toLocaleString()}`;
   }
 
   // --- CROSS-PLOTTER PANEL ---
@@ -2452,6 +2521,12 @@ def _get_javascript() -> str:
   }
 
   function populateCrossPlotter(data) {
+    const curBadge = document.getElementById('plotterCurrencyBadge');
+    const { code, symbol } = getCompanyCurrency();
+    if (curBadge) {
+      curBadge.textContent = `Currency: ${code} (${symbol.trim()})`;
+    }
+
     const select = document.getElementById('plotterMetricSelect');
     if (!select) return;
 
@@ -2559,13 +2634,17 @@ def _get_javascript() -> str:
       return;
     }
 
+    const { symbol: currSym } = getCompanyCurrency();
     let html = '';
     activePlotterMetrics.forEach((m, idx) => {
+      const isPct = isMetricPercent(m.name);
+      const unitTag = isPct ? '%' : currSym.trim();
       html += `
         <div class="metric-chip">
           <span class="chip-dot" style="background:${m.color}"></span>
           <span>${m.name}</span>
-          <span class="chip-axis-badge">${m.axis === 'left' ? 'Y1 Left' : 'Y2 Right'}</span>
+          <span style="font-size:11px;opacity:0.75;font-weight:600;padding:1px 5px;background:rgba(255,255,255,0.08);border-radius:3px;">${unitTag}</span>
+          <span class="chip-axis-badge">${m.axis === 'right' ? 'Y2 Right' : 'Y1 Left'}</span>
           <button class="chip-remove-btn" data-index="${idx}" title="Remove metric">&times;</button>
         </div>
       `;
@@ -2600,6 +2679,30 @@ def _get_javascript() -> str:
     const sortedDates = Array.from(dateSet).sort(); // chronological left to right
     const labels = sortedDates.map(d => d.split(' ')[0].split('-')[0]);
 
+    const { code: currCode, symbol: currSym } = getCompanyCurrency();
+
+    const leftMetrics = activePlotterMetrics.filter(m => m.axis !== 'right');
+    const rightMetrics = activePlotterMetrics.filter(m => m.axis === 'right');
+
+    const leftIsPct = leftMetrics.length > 0 && leftMetrics.every(m => isMetricPercent(m.name));
+    const rightIsPct = rightMetrics.length > 0 && rightMetrics.every(m => isMetricPercent(m.name));
+
+    let y1Title = '';
+    if (leftMetrics.length === 1) {
+      y1Title = `${leftMetrics[0].name} (${leftIsPct ? '%' : currCode})`;
+    } else if (leftMetrics.length > 1) {
+      y1Title = `Left Axis (${leftIsPct ? '%' : currCode})`;
+    }
+
+    let y2Title = '';
+    if (rightMetrics.length === 1) {
+      y2Title = `${rightMetrics[0].name} (${rightIsPct ? '%' : currCode})`;
+    } else if (rightMetrics.length > 1) {
+      y2Title = `Right Axis (${rightIsPct ? '%' : currCode})`;
+    }
+
+    const isLineMode = plotterChartType === 'line';
+
     const datasets = [];
     activePlotterMetrics.forEach(m => {
       const row = allRows.find(r => r.name === m.name);
@@ -2616,8 +2719,8 @@ def _get_javascript() -> str:
         yAxisID: m.axis === 'right' ? 'y2' : 'y1',
         type: plotterChartType,
         borderColor: m.color,
-        backgroundColor: m.color.replace(')', ', 0.15)').replace('rgb', 'rgba').replace('#', 'rgba(') + (m.color.startsWith('#') ? '26' : ''),
-        fill: plotterChartType === 'line',
+        backgroundColor: isLineMode ? m.color : hexToRgba(m.color, 0.7),
+        fill: false, // Disables solid fill so lines and other series remain visible
         tension: 0.25,
         borderWidth: 2.5,
         pointRadius: 4,
@@ -2651,7 +2754,13 @@ def _get_javascript() -> str:
           },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${formatNumber(ctx.raw, true)}`,
+              label: (ctx) => {
+                const isPct = isMetricPercent(ctx.dataset.label);
+                const formatted = isPct
+                  ? (formatNumber(ctx.raw, true) + (ctx.raw !== null && ctx.raw !== undefined && !isNaN(ctx.raw) ? '%' : ''))
+                  : formatNumber(ctx.raw, true, currSym);
+                return ` ${ctx.dataset.label}: ${formatted}`;
+              },
             },
           },
         },
@@ -2664,9 +2773,16 @@ def _get_javascript() -> str:
             type: 'linear',
             position: 'left',
             grid: { color: gridColor },
+            title: {
+              display: Boolean(y1Title),
+              text: y1Title,
+              color: textColor,
+              font: { size: 11, weight: '600' },
+              padding: { bottom: 6 },
+            },
             ticks: {
               color: textColor,
-              callback: (val) => formatNumber(val, true),
+              callback: (val) => leftIsPct ? val + '%' : formatNumber(val, true, currSym),
             },
           },
           y2: {
@@ -2674,9 +2790,16 @@ def _get_javascript() -> str:
             position: 'right',
             display: hasRightAxis,
             grid: { drawOnChartArea: false },
+            title: {
+              display: Boolean(y2Title),
+              text: y2Title,
+              color: textColor,
+              font: { size: 11, weight: '600' },
+              padding: { bottom: 6 },
+            },
             ticks: {
               color: textColor,
-              callback: (val) => formatNumber(val, true),
+              callback: (val) => rightIsPct ? val + '%' : formatNumber(val, true, currSym),
             },
           },
         },
