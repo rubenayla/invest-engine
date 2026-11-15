@@ -770,9 +770,6 @@ body {
   padding: 12px 28px;
   background: var(--background);
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 40;
 }
 
 .toolbar-left, .toolbar-right {
@@ -816,7 +813,7 @@ body {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 53px;
+  top: 0;
   z-index: 39;
   overflow-x: auto;
 }
