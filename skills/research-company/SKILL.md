@@ -89,7 +89,7 @@ From these primary sources, extract and write down:
 - **Customer concentration** — any large customer losses, renewals pushed, or federal/government exposure.
 - **Critical input dependencies** — named suppliers and transporters when disclosed; otherwise say that names are undisclosed. Separate price pass-through from physical availability, because recovering a higher input cost does not protect against non-delivery.
 - **Guidance changes** — what was raised, what was cut, what was held. Decompose by segment if disclosed.
-- **Official company links & resources** — identify and record the verified official company website URL, direct Investor Relations / Shareholder portal URL, and the relevant securities regulatory filings link (SEC EDGAR for US, CNMV for Spain, EDINET for Japan, etc.). These will be placed at the very top of the note in STEP 15.
+- **Official company links & resources** — identify and record the verified official company website URL, direct Investor Relations / Shareholder portal URL, the company's TIKR page (TIKR requires internal `cid` and `tid` parameters, e.g. `https://app.tikr.com/stock/about?cid={cid}&tid={tid}` — obtain via Algolia search on `tikr-terminal-v1`), and the relevant securities regulatory filings link (SEC EDGAR for US, CNMV for Spain, EDINET for Japan, etc.). These will be placed at the very top of the note in STEP 15.
 
 **RULE: If you cannot fetch the IR page (tool failure, paywall), explicitly say so in the output and flag the analysis as "news-summary-only" with LOWER confidence.**
 
@@ -422,7 +422,7 @@ Template:
 **Sector:** {sector} | **Industry:** {industry}
 **Price:** ${price} ({YYYY-MM-DD}) | **Market Cap:** ${cap}
 **Analysis Date:** {YYYY-MM-DD}
-**Company Resources:** [Official Website]({website_url}) | [Investor Relations]({ir_url}) | [TIKR](https://app.tikr.com/stock/about?ticker={TICKER}) | [Yahoo Finance](https://finance.yahoo.com/quote/{TICKER}) | [Filings]({filings_url})
+**Company Resources:** [Official Website]({website_url}) | [Investor Relations]({ir_url}) | [TIKR]({tikr_url_with_cid_and_tid}) | [Yahoo Finance](https://finance.yahoo.com/quote/{TICKER}) | [Filings]({filings_url})
 
 ## Research Provenance
 

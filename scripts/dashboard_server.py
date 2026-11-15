@@ -857,6 +857,95 @@ async def api_notes(request: Request):
     return HTMLResponse(html)
 
 
+_TIKR_CACHE_FILE = REPO_ROOT / "data" / "tikr_cache.json"
+_TIKR_CACHE: dict[str, str] = {}
+
+
+def _resolve_tikr_url(ticker: str, company_name: str = "") -> str:
+    """Resolve TIKR URL using Algolia search to find cid and tid, with file-backed caching."""
+    global _TIKR_CACHE
+    if not _TIKR_CACHE and _TIKR_CACHE_FILE.is_file():
+        try:
+            import json
+            _TIKR_CACHE = json.loads(_TIKR_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            _TIKR_CACHE = {}
+
+    if ticker in _TIKR_CACHE:
+        return _TIKR_CACHE[ticker]
+
+    import json
+    import urllib.request
+
+    suffix_map = {
+        "MC": "BME",
+        "T": "TSE",
+        "L": "LSE",
+        "DE": "XTRA",
+        "PA": "ENXTPA",
+        "AS": "ENXTAM",
+    }
+    parts = ticker.split(".")
+    clean_t = parts[0]
+    expected_exch = suffix_map.get(parts[1].upper()) if len(parts) > 1 else None
+
+    queries = [clean_t]
+    if company_name:
+        first_word = company_name.split()[0]
+        if first_word.lower() not in [clean_t.lower(), "the"]:
+            queries.append(first_word)
+        queries.append(company_name)
+
+    for q in queries:
+        payload = {
+            "requests": [{"indexName": "tikr-terminal-v1", "query": q, "params": "hitsPerPage=10"}]
+        }
+        req = urllib.request.Request(
+            "https://tjpay1dyt8-dsn.algolia.net/1/indexes/*/queries?x-algolia-api-key=d88ea2aa3c22293c96736f5ceb5bab4e&x-algolia-application-id=TJPAY1DYT8",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            res = json.loads(urllib.request.urlopen(req, timeout=2.5).read().decode("utf-8"))
+            hits = res.get("results", [{}])[0].get("hits", [])
+            if expected_exch:
+                for h in hits:
+                    if h.get("tickersymbol", "").upper() == clean_t.upper() and h.get("exchangesymbol", "").upper() == expected_exch:
+                        url = f"https://app.tikr.com/stock/about?cid={h['companyid']}&tid={h['tradingitemid']}"
+                        _TIKR_CACHE[ticker] = url
+                        _save_tikr_cache()
+                        return url
+            for h in hits:
+                if h.get("tickersymbol", "").upper() == clean_t.upper():
+                    url = f"https://app.tikr.com/stock/about?cid={h['companyid']}&tid={h['tradingitemid']}"
+                    _TIKR_CACHE[ticker] = url
+                    _save_tikr_cache()
+                    return url
+            if company_name:
+                for h in hits:
+                    cname = h.get("companyname", "").lower()
+                    if company_name.lower() in cname or cname in company_name.lower():
+                        url = f"https://app.tikr.com/stock/about?cid={h['companyid']}&tid={h['tradingitemid']}"
+                        _TIKR_CACHE[ticker] = url
+                        _save_tikr_cache()
+                        return url
+        except Exception:
+            continue
+
+    fallback_url = f"https://app.tikr.com/stock/about?ticker={ticker}"
+    _TIKR_CACHE[ticker] = fallback_url
+    return fallback_url
+
+
+def _save_tikr_cache():
+    try:
+        import json
+        _TIKR_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _TIKR_CACHE_FILE.write_text(json.dumps(_TIKR_CACHE, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
 def _build_notes_header_html(ticker: str, content: str, has_visual_report: bool = False) -> str:
     """Build a clean action bar with links to external resources for the company."""
     import re
@@ -872,6 +961,13 @@ def _build_notes_header_html(ticker: str, content: str, has_visual_report: bool 
 
     m_ir = re.search(r"\[(?:Investor\s+Relations|IR|Shareholder)\s*[^\]]*\]\((https?://[^\)]+)\)", content, re.IGNORECASE)
     ir_url = m_ir.group(1) if m_ir else None
+
+    # TIKR URL extraction or dynamic resolution
+    m_tikr = re.search(r"\[TIKR\]\((https?://app\.tikr\.com/[^\)]+)\)", content, re.IGNORECASE)
+    if m_tikr and "cid=" in m_tikr.group(1):
+        tikr_url = m_tikr.group(1)
+    else:
+        tikr_url = _resolve_tikr_url(ticker, company_name)
 
     # Secondary heuristic: look for investor.<domain> or ir.<domain> in text
     if not ir_url:
@@ -937,7 +1033,7 @@ def _build_notes_header_html(ticker: str, content: str, has_visual_report: bool 
         f"<div class='toolbar-right'>"
         f"<a class='nav-btn' href='{website_url}' target='_blank' rel='noopener'>{web_label}</a>"
         f"<a class='nav-btn' href='{ir_url}' target='_blank' rel='noopener'>{ir_label}</a>"
-        f"<a class='nav-btn' href='https://app.tikr.com/stock/about?ticker={ticker}' target='_blank' rel='noopener'>📈 TIKR</a>"
+        f"<a class='nav-btn' href='{tikr_url}' target='_blank' rel='noopener'>📈 TIKR</a>"
         f"<a class='nav-btn' href='https://finance.yahoo.com/quote/{ticker}' target='_blank' rel='noopener'>📊 Yahoo Finance</a>"
         f"<a class='nav-btn' href='https://www.google.com/finance/quote/{ticker}' target='_blank' rel='noopener'>🔍 Google Finance</a>"
         f"<a class='nav-btn' href='https://www.tradingview.com/symbols/{ticker}/' target='_blank' rel='noopener'>📉 TradingView</a>"
