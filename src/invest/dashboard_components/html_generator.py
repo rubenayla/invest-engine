@@ -2772,6 +2772,45 @@ renderCards();
             .header-actions { justify-content: flex-start; }
             .controls { padding-bottom: 14px; }
             .table-container { height: calc(100dvh - 250px); }
+        }
+        /* Fast Tooltips (~220ms, 1/3 of native delay) */
+        .fast-tooltip-card {
+            position: fixed;
+            z-index: 100000;
+            display: none;
+            pointer-events: none;
+            max-width: 420px;
+            padding: 8px 12px;
+            font-family: var(--font-body, system-ui, -apple-system, sans-serif);
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--text-primary, #e0e6ed);
+            background: var(--bg-card, rgba(22, 27, 34, 0.96));
+            border: 1px solid var(--border, rgba(240, 246, 252, 0.15));
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            transform: translateY(3px);
+            transition: opacity 0.1s ease, transform 0.1s ease;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .fast-tooltip-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .fast-tooltip-card .ft-line {
+            padding: 2px 0;
+        }
+        .fast-tooltip-card .ft-line:not(:last-child) {
+            border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+        }
+        .fast-tooltip-card .ft-title {
+            font-weight: 700;
+            color: var(--accent-bright, var(--heading, #58a6ff));
+            margin-bottom: 2px;
         }"""
 
     def _get_javascript(self) -> str:
@@ -2813,7 +2852,110 @@ renderCards();
                     startPolling();
                 }
             }
+
+            // Fast tooltips (1/3rd of native hover delay ~220ms)
+            initFastTooltips(220);
         });
+
+        function initFastTooltips(delayMs) {
+            delayMs = delayMs || 220;
+            let tooltipEl = document.getElementById('fast-tooltip-card');
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.id = 'fast-tooltip-card';
+                tooltipEl.className = 'fast-tooltip-card';
+                document.body.appendChild(tooltipEl);
+            }
+
+            let hoverTimer = null;
+            let activeTarget = null;
+            let isVisible = false;
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            function show(target, text, x, y) {
+                if (!text || !text.trim()) return;
+
+                if (text.includes(' | ')) {
+                    const parts = text.split(' | ');
+                    tooltipEl.innerHTML = parts.map((p, idx) => {
+                        if (idx === 0 && !p.includes(':')) {
+                            return `<div class="ft-line ft-title">${escapeHtml(p.trim())}</div>`;
+                        }
+                        return `<div class="ft-line">${escapeHtml(p.trim())}</div>`;
+                    }).join('');
+                } else {
+                    tooltipEl.textContent = text;
+                }
+
+                tooltipEl.style.display = 'block';
+                const rect = tooltipEl.getBoundingClientRect();
+                const pad = 12;
+                let left = x + 12;
+                let top = y + 16;
+
+                if (left + rect.width > window.innerWidth - pad) {
+                    left = Math.max(pad, window.innerWidth - rect.width - pad);
+                }
+                if (top + rect.height > window.innerHeight - pad) {
+                    top = Math.max(pad, y - rect.height - 8);
+                }
+
+                tooltipEl.style.left = left + 'px';
+                tooltipEl.style.top = top + 'px';
+                tooltipEl.classList.add('visible');
+                isVisible = true;
+            }
+
+            function hide() {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+                activeTarget = null;
+                isVisible = false;
+                if (tooltipEl) {
+                    tooltipEl.classList.remove('visible');
+                    tooltipEl.style.display = 'none';
+                }
+            }
+
+            document.addEventListener('mouseover', function(e) {
+                const el = e.target.closest('[title], [data-tooltip]');
+                if (!el) return;
+
+                if (el.hasAttribute('title') && el.getAttribute('title')) {
+                    el.setAttribute('data-tooltip', el.getAttribute('title'));
+                    el.removeAttribute('title');
+                }
+
+                const text = el.getAttribute('data-tooltip');
+                if (!text) return;
+
+                if (activeTarget === el) return;
+                activeTarget = el;
+
+                clearTimeout(hoverTimer);
+                const currentDelay = isVisible ? 70 : delayMs;
+                hoverTimer = setTimeout(() => {
+                    if (activeTarget === el) {
+                        show(el, text, e.clientX, e.clientY);
+                    }
+                }, currentDelay);
+            }, true);
+
+            document.addEventListener('mouseout', function(e) {
+                const el = e.target.closest('[data-tooltip]');
+                if (el && el === activeTarget) {
+                    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+                    hide();
+                }
+            }, true);
+
+            window.addEventListener('scroll', hide, true);
+            window.addEventListener('click', hide, true);
+        }
 
         // ── Update control ──
         function triggerUpdate(lite) {

@@ -1743,6 +1743,46 @@ tr.tikr-clickable-row.active-row .tikr-row-dot { opacity: 1; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Fast Tooltips (delay dropped to approx 1/3 of browser native: ~220ms) */
+.fast-tooltip-card {
+  position: fixed;
+  z-index: 100000;
+  display: none;
+  pointer-events: none;
+  max-width: 380px;
+  padding: 8px 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--foreground);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.1s ease, transform 0.1s ease;
+  white-space: normal;
+  word-break: break-word;
+}
+.fast-tooltip-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fast-tooltip-card .ft-line {
+  padding: 2px 0;
+}
+.fast-tooltip-card .ft-line:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+.fast-tooltip-card .ft-title {
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 2px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .stocks-sidebar {
@@ -1788,6 +1828,7 @@ def _get_javascript() -> str:
     setupKeyboardShortcuts();
     setupStatementsControls();
     setupCrossPlotterControls();
+    initFastTooltips(220);
 
     if (stocksCatalog && stocksCatalog.length) {
       renderSidebarList();
@@ -1935,8 +1976,30 @@ def _get_javascript() -> str:
         evStr = `<span>${m.toFixed(0)}% margin</span>`;
       }
 
+      // Build rich explanation tooltip (triggers in ~220ms, 1/3rd native hover delay)
+      const tipParts = [`${stock.ticker} - ${stock.company_name || stock.ticker}`];
+      if (verdict) tipParts.push(`Verdict: ${verdict}`);
+      if (stock.conviction) tipParts.push(`Conviction: ${stock.conviction}`);
+      if (stock.quality_score) tipParts.push(`Quality: ${stock.quality_score}/25`);
+      if (stock.expected_value_pct != null) {
+        const ev = Number(stock.expected_value_pct);
+        tipParts.push(`Expected Value: ${ev > 0 ? '+' : ''}${ev.toFixed(1)}%`);
+      }
+      if (stock.target_price || stock.fair_value) {
+        const tp = Number(stock.target_price || stock.fair_value);
+        tipParts.push(`Target Price: $${tp.toFixed(2)}`);
+      }
+      if (stock.entry_price) {
+        const ep = Number(stock.entry_price);
+        tipParts.push(`Entry Price: $${ep.toFixed(2)}${stock.entry_actionable ? ' (Actionable Now)' : ''}`);
+      }
+      if (stock.best_margin != null) {
+        tipParts.push(`Best Margin: ${(Number(stock.best_margin) * 100).toFixed(0)}%`);
+      }
+      const cardTip = tipParts.join(' | ');
+
       html += `
-        <a class="stock-card-item ${isAct ? 'active' : ''}" data-ticker="${stock.ticker}" href="/api/notes/${stock.ticker}">
+        <a class="stock-card-item ${isAct ? 'active' : ''}" data-ticker="${stock.ticker}" data-tooltip="${htmlEscape(cardTip)}" href="/api/notes/${stock.ticker}">
           <div class="stock-card-top">
             <span class="stock-card-ticker">${stock.ticker}</span>
             <div class="stock-card-badges">
@@ -3104,6 +3167,101 @@ def _get_javascript() -> str:
       `;
 
       table.parentNode.insertBefore(widget, table);
+    }
+
+    // --- FAST TOOLTIPS (1/3rd native hover delay ~220ms) ---
+    function initFastTooltips(delayMs = 220) {
+      let tooltipEl = document.getElementById('fast-tooltip-card');
+      if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'fast-tooltip-card';
+        tooltipEl.className = 'fast-tooltip-card';
+        document.body.appendChild(tooltipEl);
+      }
+
+      let hoverTimer = null;
+      let activeTarget = null;
+      let isVisible = false;
+
+      function show(target, text, x, y) {
+        if (!text || !text.trim()) return;
+
+        if (text.includes(' | ')) {
+          const parts = text.split(' | ');
+          tooltipEl.innerHTML = parts.map((p, idx) => {
+            if (idx === 0 && !p.includes(':')) {
+              return `<div class="ft-line ft-title">${htmlEscape(p.trim())}</div>`;
+            }
+            return `<div class="ft-line">${htmlEscape(p.trim())}</div>`;
+          }).join('');
+        } else {
+          tooltipEl.textContent = text;
+        }
+
+        tooltipEl.style.display = 'block';
+        const rect = tooltipEl.getBoundingClientRect();
+        const pad = 12;
+        let left = x + 12;
+        let top = y + 16;
+
+        if (left + rect.width > window.innerWidth - pad) {
+          left = Math.max(pad, window.innerWidth - rect.width - pad);
+        }
+        if (top + rect.height > window.innerHeight - pad) {
+          top = Math.max(pad, y - rect.height - 8);
+        }
+
+        tooltipEl.style.left = left + 'px';
+        tooltipEl.style.top = top + 'px';
+        tooltipEl.classList.add('visible');
+        isVisible = true;
+      }
+
+      function hide() {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
+        activeTarget = null;
+        isVisible = false;
+        if (tooltipEl) {
+          tooltipEl.classList.remove('visible');
+          tooltipEl.style.display = 'none';
+        }
+      }
+
+      document.addEventListener('mouseover', function(e) {
+        const el = e.target.closest('[title], [data-tooltip]');
+        if (!el) return;
+
+        if (el.hasAttribute('title') && el.getAttribute('title')) {
+          el.setAttribute('data-tooltip', el.getAttribute('title'));
+          el.removeAttribute('title');
+        }
+
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+
+        if (activeTarget === el) return;
+        activeTarget = el;
+
+        clearTimeout(hoverTimer);
+        const currentDelay = isVisible ? 70 : delayMs;
+        hoverTimer = setTimeout(() => {
+          if (activeTarget === el) {
+            show(el, text, e.clientX, e.clientY);
+          }
+        }, currentDelay);
+      }, true);
+
+      document.addEventListener('mouseout', function(e) {
+        const el = e.target.closest('[data-tooltip]');
+        if (el && el === activeTarget) {
+          if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+          hide();
+        }
+      }, true);
+
+      window.addEventListener('scroll', hide, true);
+      window.addEventListener('click', hide, true);
     }
 
     function htmlEscape(str) {
