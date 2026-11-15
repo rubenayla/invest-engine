@@ -62,7 +62,12 @@ def render_notes_page(
             <span class="sidebar-title">Stock Universe</span>
             <span class="sidebar-count-badge" id="sidebarStockCount">0</span>
           </div>
-          <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" title="Collapse Sidebar ([ or Ctrl+B)" aria-label="Collapse Sidebar">◀</button>
+          <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" title="Collapse Sidebar ([ or Ctrl+B)" aria-label="Collapse Sidebar">
+            <svg class="sidebar-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="3.5" />
+              <path d="M3 6.5A3.5 3.5 0 0 1 6.5 3H9v18H6.5A3.5 3.5 0 0 1 3 17.5V6.5z" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
         </div>
         <div class="sidebar-search-wrap">
           <input type="text" id="sidebarSearchInput" placeholder="Search ticker or name... (/)" autocomplete="off" spellcheck="false">
@@ -391,7 +396,12 @@ def _render_topbar_html(ticker: str, meta: dict, has_visual_report: bool) -> str
     return (
         f'<header class="workspace-topbar" id="workspaceTopbar">'
         f'<div class="toolbar-left">'
-        f'<button class="nav-btn sidebar-toggle-btn" id="sidebarOpenBtn" title="Toggle Sidebar ([ or Ctrl+B)">☰ Stocks</button>'
+        f'<button class="nav-btn sidebar-toggle-btn" id="sidebarOpenBtn" title="Toggle Sidebar ([ or Ctrl+B)" aria-label="Toggle Sidebar">'
+        f'<svg class="sidebar-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        f'<rect width="18" height="18" x="3" y="3" rx="3.5" />'
+        f'<path d="M3 6.5A3.5 3.5 0 0 1 6.5 3H9v18H6.5A3.5 3.5 0 0 1 3 17.5V6.5z" fill="currentColor" stroke="none" />'
+        f'</svg>'
+        f'</button>'
         f"<a class='nav-btn back-btn' href='/'>← Dashboard</a>"
         f'{visual_btn}'
         f'</div>'
@@ -554,19 +564,36 @@ body {
 }
 
 .sidebar-toggle-btn {
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: var(--foreground);
+  color: var(--heading);
   cursor: pointer;
-  padding: 3px 8px;
-  font-size: 12px;
-  transition: all 0.15s;
+  padding: 5px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 .sidebar-toggle-btn:hover {
   background: var(--surface-hover);
   border-color: var(--heading);
-  color: var(--heading);
+  color: var(--accent);
+}
+.sidebar-toggle-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Avoid duplicate toggle buttons: hide topbar open button when sidebar is open */
+.app-container:not(.sidebar-collapsed) #sidebarOpenBtn {
+  display: none !important;
+}
+.app-container.sidebar-collapsed #sidebarOpenBtn {
+  display: inline-flex !important;
 }
 
 .sidebar-search-wrap {
@@ -1792,8 +1819,15 @@ tr.tikr-clickable-row.active-row .tikr-row-dot { opacity: 1; }
     bottom: 0;
     box-shadow: 0 0 30px rgba(0,0,0,0.3);
   }
+  .app-container.sidebar-collapsed .stocks-sidebar,
   .app-container:not(.sidebar-open) .stocks-sidebar {
     margin-left: calc(-1 * var(--sidebar-width));
+  }
+  .app-container.sidebar-open .stocks-sidebar {
+    margin-left: 0 !important;
+  }
+  .app-container #sidebarOpenBtn {
+    display: inline-flex !important;
   }
   .tab-panels-container { padding: 18px 14px; }
   .markdown-body { font-size: 16px; }
@@ -1859,12 +1893,17 @@ def _get_javascript() -> str:
 
     if (isSidebarCollapsed) {
       appContainer.classList.add('sidebar-collapsed');
+      appContainer.classList.remove('sidebar-open');
+    } else {
+      appContainer.classList.remove('sidebar-collapsed');
+      appContainer.classList.add('sidebar-open');
     }
 
     function toggleSidebar() {
       isSidebarCollapsed = !isSidebarCollapsed;
       appContainer.classList.toggle('sidebar-collapsed', isSidebarCollapsed);
-      localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed);
+      appContainer.classList.toggle('sidebar-open', !isSidebarCollapsed);
+      localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
     }
 
     if (collapseBtn) collapseBtn.addEventListener('click', toggleSidebar);
@@ -2060,7 +2099,10 @@ def _get_javascript() -> str:
         const openBtn = document.getElementById('sidebarOpenBtn');
         if (openBtn) openBtn.addEventListener('click', () => {
           isSidebarCollapsed = !isSidebarCollapsed;
-          document.getElementById('appContainer').classList.toggle('sidebar-collapsed', isSidebarCollapsed);
+          const app = document.getElementById('appContainer');
+          app.classList.toggle('sidebar-collapsed', isSidebarCollapsed);
+          app.classList.toggle('sidebar-open', !isSidebarCollapsed);
+          localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
         });
       }
 
@@ -2162,7 +2204,8 @@ def _get_javascript() -> str:
         const app = document.getElementById('appContainer');
         isSidebarCollapsed = !isSidebarCollapsed;
         app.classList.toggle('sidebar-collapsed', isSidebarCollapsed);
-        localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed);
+        app.classList.toggle('sidebar-open', !isSidebarCollapsed);
+        localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
       }
       // / focuses search
       else if (e.key === '/') {
@@ -2842,6 +2885,106 @@ def _get_javascript() -> str:
     }
   }
 
+  function htmlEscape(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // --- FAST TOOLTIPS (1/3rd native hover delay ~220ms) ---
+  function initFastTooltips(delayMs = 220) {
+    let tooltipEl = document.getElementById('fast-tooltip-card');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'fast-tooltip-card';
+      tooltipEl.className = 'fast-tooltip-card';
+      document.body.appendChild(tooltipEl);
+    }
+
+    let hoverTimer = null;
+    let activeTarget = null;
+    let isVisible = false;
+
+    function show(target, text, x, y) {
+      if (!text || !text.trim()) return;
+
+      if (text.includes(' | ')) {
+        const parts = text.split(' | ');
+        tooltipEl.innerHTML = parts.map((p, idx) => {
+          if (idx === 0 && !p.includes(':')) {
+            return `<div class="ft-line ft-title">${htmlEscape(p.trim())}</div>`;
+          }
+          return `<div class="ft-line">${htmlEscape(p.trim())}</div>`;
+        }).join('');
+      } else {
+        tooltipEl.textContent = text;
+      }
+
+      tooltipEl.style.display = 'block';
+      const rect = tooltipEl.getBoundingClientRect();
+      const pad = 12;
+      let left = x + 12;
+      let top = y + 16;
+
+      if (left + rect.width > window.innerWidth - pad) {
+        left = Math.max(pad, window.innerWidth - rect.width - pad);
+      }
+      if (top + rect.height > window.innerHeight - pad) {
+        top = Math.max(pad, y - rect.height - 8);
+      }
+
+      tooltipEl.style.left = left + 'px';
+      tooltipEl.style.top = top + 'px';
+      tooltipEl.classList.add('visible');
+      isVisible = true;
+    }
+
+    function hide() {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+      activeTarget = null;
+      isVisible = false;
+      if (tooltipEl) {
+        tooltipEl.classList.remove('visible');
+        tooltipEl.style.display = 'none';
+      }
+    }
+
+    document.addEventListener('mouseover', function(e) {
+      const el = e.target.closest('[title], [data-tooltip]');
+      if (!el) return;
+
+      if (el.hasAttribute('title') && el.getAttribute('title')) {
+        el.setAttribute('data-tooltip', el.getAttribute('title'));
+        el.removeAttribute('title');
+      }
+
+      const text = el.getAttribute('data-tooltip');
+      if (!text) return;
+
+      if (activeTarget === el) return;
+      activeTarget = el;
+
+      clearTimeout(hoverTimer);
+      const currentDelay = isVisible ? 70 : delayMs;
+      hoverTimer = setTimeout(() => {
+        if (activeTarget === el) {
+          show(el, text, e.clientX, e.clientY);
+        }
+      }, currentDelay);
+    }, true);
+
+    document.addEventListener('mouseout', function(e) {
+      const el = e.target.closest('[data-tooltip]');
+      if (el && el === activeTarget) {
+        if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+        hide();
+      }
+    }, true);
+
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('click', hide, true);
+  }
+
   // --- IN-PAGE MARKDOWN TABLES ENHANCER (TIKR & SCENARIOS) ---
   function initMarkdownTables(container) {
     if (!container || typeof Chart === 'undefined') return;
@@ -3167,106 +3310,6 @@ def _get_javascript() -> str:
       `;
 
       table.parentNode.insertBefore(widget, table);
-    }
-
-    // --- FAST TOOLTIPS (1/3rd native hover delay ~220ms) ---
-    function initFastTooltips(delayMs = 220) {
-      let tooltipEl = document.getElementById('fast-tooltip-card');
-      if (!tooltipEl) {
-        tooltipEl = document.createElement('div');
-        tooltipEl.id = 'fast-tooltip-card';
-        tooltipEl.className = 'fast-tooltip-card';
-        document.body.appendChild(tooltipEl);
-      }
-
-      let hoverTimer = null;
-      let activeTarget = null;
-      let isVisible = false;
-
-      function show(target, text, x, y) {
-        if (!text || !text.trim()) return;
-
-        if (text.includes(' | ')) {
-          const parts = text.split(' | ');
-          tooltipEl.innerHTML = parts.map((p, idx) => {
-            if (idx === 0 && !p.includes(':')) {
-              return `<div class="ft-line ft-title">${htmlEscape(p.trim())}</div>`;
-            }
-            return `<div class="ft-line">${htmlEscape(p.trim())}</div>`;
-          }).join('');
-        } else {
-          tooltipEl.textContent = text;
-        }
-
-        tooltipEl.style.display = 'block';
-        const rect = tooltipEl.getBoundingClientRect();
-        const pad = 12;
-        let left = x + 12;
-        let top = y + 16;
-
-        if (left + rect.width > window.innerWidth - pad) {
-          left = Math.max(pad, window.innerWidth - rect.width - pad);
-        }
-        if (top + rect.height > window.innerHeight - pad) {
-          top = Math.max(pad, y - rect.height - 8);
-        }
-
-        tooltipEl.style.left = left + 'px';
-        tooltipEl.style.top = top + 'px';
-        tooltipEl.classList.add('visible');
-        isVisible = true;
-      }
-
-      function hide() {
-        clearTimeout(hoverTimer);
-        hoverTimer = null;
-        activeTarget = null;
-        isVisible = false;
-        if (tooltipEl) {
-          tooltipEl.classList.remove('visible');
-          tooltipEl.style.display = 'none';
-        }
-      }
-
-      document.addEventListener('mouseover', function(e) {
-        const el = e.target.closest('[title], [data-tooltip]');
-        if (!el) return;
-
-        if (el.hasAttribute('title') && el.getAttribute('title')) {
-          el.setAttribute('data-tooltip', el.getAttribute('title'));
-          el.removeAttribute('title');
-        }
-
-        const text = el.getAttribute('data-tooltip');
-        if (!text) return;
-
-        if (activeTarget === el) return;
-        activeTarget = el;
-
-        clearTimeout(hoverTimer);
-        const currentDelay = isVisible ? 70 : delayMs;
-        hoverTimer = setTimeout(() => {
-          if (activeTarget === el) {
-            show(el, text, e.clientX, e.clientY);
-          }
-        }, currentDelay);
-      }, true);
-
-      document.addEventListener('mouseout', function(e) {
-        const el = e.target.closest('[data-tooltip]');
-        if (el && el === activeTarget) {
-          if (e.relatedTarget && el.contains(e.relatedTarget)) return;
-          hide();
-        }
-      }, true);
-
-      window.addEventListener('scroll', hide, true);
-      window.addEventListener('click', hide, true);
-    }
-
-    function htmlEscape(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     const tables = container.querySelectorAll('table');

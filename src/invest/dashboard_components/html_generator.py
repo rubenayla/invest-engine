@@ -589,8 +589,19 @@ class HTMLGenerator:
 
         return f'''
         <tr class="stock-row {new_status}" data-ticker="{ticker}" data-verdict="{verdict}" data-actionable="{'true' if is_actionable is True else 'false'}" data-notes="{'true' if notes_exist else 'false'}" data-signals="{'true' if has_signals_val else 'false'}">
-            <td class="col-rank rank-cell"><button class="pin-row-btn" onclick="togglePinStock('{ticker}', event)" title="Pin to top for comparison">📌</button><span class="rank-num"></span></td>
-            <td class="col-stock ticker-cell"><span class="ticker-trigger" data-ticker="{ticker}" data-price="{current_price or 0}" onclick="toggleKebab(event, this)" title="{company_name}">{ticker} &#8942;</span><a class="notes-link" href="/api/notes/{ticker}" onclick="openNotes('{ticker}'); return false;">&#128196; Notes</a><div class="kebab-menu"><div class="kebab-label">{company_name}</div><div class="kebab-label" style="color:{updated_color}; padding-top:0;">Data: {updated_str}</div><div class="kebab-label" style="color:{models_color}; padding-top:0;">Models: {models_str}</div><div class="kebab-sep"></div><a class="kebab-item" href="#" onclick="openNotes('{ticker}'); return false;">&#128196; Analysis notes</a><div class="kebab-item" onclick="openAlarmModal('{ticker}', {current_price or 0}); closeAllKebabs();">&#128276; Price alarm</div><a class="kebab-item" href="https://finance.yahoo.com/quote/{ticker}" target="_blank" rel="noopener">&#128200; Yahoo Finance</a></div></td>
+            <td class="col-rank rank-cell"><button class="pin-row-btn" onclick="togglePinStock('{ticker}', event)" title="Pin {ticker} to top for comparison">📌</button><span class="rank-num"></span></td>
+            <td class="col-stock ticker-cell">
+                <div class="ticker-flex">
+                    <a class="ticker-main-link" href="/api/notes/{ticker}" onclick="openNotes('{ticker}'); return false;" title="{company_name} ({ticker}) — Click to open workstation notes &amp; financials">
+                        <span class="ticker-symbol">{ticker}</span>
+                        <span class="ticker-subname">{company_name}</span>
+                    </a>
+                    <div class="ticker-actions">
+                        <button class="ticker-action-btn alarm-btn" onclick="openAlarmModal('{ticker}', {current_price or 0}); event.stopPropagation();" title="Set price alarm for {ticker}">🔔</button>
+                        <a class="ticker-action-btn ext-btn" href="https://finance.yahoo.com/quote/{ticker}" target="_blank" rel="noopener" title="Yahoo Finance" onclick="event.stopPropagation();">↗</a>
+                    </div>
+                </div>
+            </td>
             <td class="col-price">{self._safe_format(current_price, prefix="$")}</td>
             <td class="col-status">{status_html}</td>
             <td class="col-autores">{autoresearch_html}</td>
@@ -2656,9 +2667,11 @@ renderCards();
             opacity: 1;
             transform: scale(1.18);
         }
+        .pin-row-btn.active,
         .stock-row.is-pinned .pin-row-btn {
             opacity: 1;
-            filter: drop-shadow(0 0 4px var(--accent));
+            filter: drop-shadow(0 0 5px var(--gold));
+            transform: scale(1.1);
         }
 
         .rank-num {
@@ -2700,43 +2713,79 @@ renderCards();
             display: none !important;
         }
 
-        /* Ticker cell & Notes link */
-        .ticker-link {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 700;
+        /* Ticker cell & Actions */
+        .ticker-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
         }
-        .ticker-link:hover { text-decoration: underline; }
-        .ticker-trigger {
-            color: var(--accent);
-            font-weight: 700;
+        .ticker-main-link {
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
             cursor: pointer;
-            padding: 2px 5px;
-            border-radius: 4px;
-            transition: background 0.12s, color 0.12s;
-            user-select: none;
-            font-size: 12.5px;
+            line-height: 1.2;
+            min-width: 0;
+            flex: 1;
         }
-        .ticker-trigger:hover {
-            background: var(--bg-hover);
-            color: var(--accent-bright);
-        }
-        .notes-link {
-            display: inline-block;
-            margin-left: 5px;
-            padding: 1px 5px;
+        .ticker-symbol {
             color: var(--accent);
-            background: var(--accent-dim);
-            border: 1px solid var(--border-subtle);
-            border-radius: 4px;
-            font-size: 10.5px;
-            font-weight: 500;
-            text-decoration: none;
-            vertical-align: middle;
+            font-weight: 700;
+            font-size: 13px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.2px;
+            transition: color 0.12s;
         }
-        .notes-link:hover {
+        .ticker-main-link:hover .ticker-symbol {
+            color: var(--accent-bright);
+            text-decoration: underline;
+        }
+        .ticker-subname {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 400;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+        .ticker-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            opacity: 0.35;
+            transition: opacity 0.15s;
+        }
+        .stock-row:hover .ticker-actions {
+            opacity: 1;
+        }
+        .ticker-action-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 11.5px;
+            padding: 1px 3px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.12s;
+        }
+        .ticker-action-btn:hover {
             background: var(--bg-hover);
-            border-color: var(--accent);
+            color: var(--text-primary);
+            transform: scale(1.15);
+        }
+        .ticker-action-btn.alarm-btn:hover {
+            color: var(--gold);
+        }
+        .ticker-action-btn.ext-btn:hover {
+            color: var(--accent-bright);
         }
 
         /* Valuation cells */
@@ -2990,15 +3039,32 @@ renderCards();
 
         function togglePinStock(ticker, event) {
             if (event) event.stopPropagation();
-            const pinned = new Set(getPinnedStocks());
-            if (pinned.has(ticker)) {
-                pinned.delete(ticker);
-            } else {
+            const pinnedList = getPinnedStocks();
+            const pinned = new Set(pinnedList);
+            const isAdding = !pinned.has(ticker);
+            if (isAdding) {
                 pinned.add(ticker);
+            } else {
+                pinned.delete(ticker);
             }
             savePinnedStocks(Array.from(pinned));
             applyPinnedStocks();
             filterTableRows();
+            showToast(isAdding ? ('📌 Pinned ' + ticker + ' to top') : ('Unpinned ' + ticker));
+        }
+
+        function showToast(title, body) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = '<div class="toast-title">' + title + '</div>' + (body ? '<div class="toast-body">' + body + '</div>' : '');
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 350);
+            }, 3000);
         }
 
         function applyPinnedStocks() {
@@ -3017,7 +3083,8 @@ renderCards();
                 row.classList.toggle('is-pinned', isPinned);
                 const btn = row.querySelector('.pin-row-btn');
                 if (btn) {
-                    btn.title = isPinned ? 'Unpin stock' : 'Pin to top for comparison';
+                    btn.classList.toggle('active', isPinned);
+                    btn.title = isPinned ? ('Unpin ' + ticker) : ('Pin ' + ticker + ' to top for comparison');
                 }
                 if (isPinned) {
                     pinnedRows.push(row);
@@ -3647,7 +3714,7 @@ renderCards();
                         : '<span style="color:#58a6ff">Active</span>';
                     return '<div class="alarm-item">' +
                         '<span class="alarm-info">' + a.condition + ' $' + Number(a.target_price).toFixed(2) + ' ' + status + '</span>' +
-                        '<span class="alarm-delete" onclick="deleteAlarm(' + a.id + ',\\'' + ticker + '\\')" title="Delete">&#10005;</span>' +
+                        '<span class="alarm-delete" data-id="' + a.id + '" data-ticker="' + ticker + '" onclick="deleteAlarm(Number(this.dataset.id), this.dataset.ticker)" title="Delete">&#10005;</span>' +
                         '</div>';
                 }).join('');
             });
