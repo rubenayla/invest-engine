@@ -99,3 +99,39 @@ def test_model_coverage_is_diagnostic_not_dashboard_content():
     assert 'Model coverage' in dashboard
     assert 'Analysis Summary' not in dashboard
     assert '<details class="dashboard-diagnostics" open>' not in dashboard
+
+
+def test_dashboard_comparison_grid_and_toolbar(tmp_path):
+    gen = HTMLGenerator(output_dir=str(tmp_path))
+    dashboard = gen.generate_dashboard_html(
+        {"PNG.V": _stock(1.5, {"llm_deep_analysis": _llm("BUY", 45, entry=1.6, price=1.5)})},
+        {},
+    )
+    css = gen._get_css_styles()
+    js = gen._get_javascript()
+
+    # Toolbar & filter pills
+    assert 'class="table-toolbar-bar"' in dashboard
+    assert 'data-filter="actionable"' in dashboard
+    assert 'data-filter="pinned"' in dashboard
+    assert 'data-preset="core"' in dashboard
+
+    # High-density comparison table structure
+    assert 'class="col-rank"' in dashboard
+    assert 'class="col-stock"' in dashboard
+    assert 'class="pin-row-btn"' in dashboard
+    assert 'data-actionable="true"' in dashboard
+
+    # Sticky column and high-density CSS
+    assert 'position: sticky;' in css
+    assert '.col-rank' in css
+    assert '.col-stock' in css
+    assert '.preset-core' in css
+    assert '.stock-row.is-pinned' in css
+
+    # JavaScript comparison helpers
+    assert 'function togglePinStock(' in js
+    assert 'function applyPinnedStocks(' in js
+    assert 'function setColumnPreset(' in js
+    assert 'function setFilterPill(' in js
+    assert 'function toggleDensity(' in js
