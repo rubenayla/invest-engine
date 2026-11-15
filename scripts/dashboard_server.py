@@ -15,7 +15,9 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -385,6 +387,9 @@ class SnapshotCache:
         self._stocks_data: dict | None = None
         self._health: dict | None = None
         self._generated_at: str | None = None
+        self._catalog_cache: list[dict] | None = None
+        self._catalog_stocks_id: int | None = None
+        self._catalog_notes_dir: str | None = None
 
     def _load(self):
         sys.path.insert(0, str(REPO_ROOT / "scripts"))
@@ -409,7 +414,29 @@ class SnapshotCache:
                 self._stocks_data = stocks_data
                 self._health = health
                 self._generated_at = _now_iso()
+                self._catalog_cache = None
             return True
+
+    def invalidate_notes_catalog(self):
+        with self._lock:
+            self._catalog_cache = None
+
+    def get_notes_catalog(self) -> list[dict]:
+        with self._lock:
+            if (
+                self._catalog_cache is not None
+                and self._catalog_stocks_id == id(self._stocks_data)
+                and self._catalog_notes_dir == str(NOTES_DIR)
+            ):
+                return self._catalog_cache
+
+        stocks_data, _, _ = self.get()
+        catalog = _build_notes_catalog(stocks_data)
+        with self._lock:
+            self._catalog_cache = catalog
+            self._catalog_stocks_id = id(self._stocks_data)
+            self._catalog_notes_dir = str(NOTES_DIR)
+            return self._catalog_cache
 
     def get(self):
         """Return (stocks_data, health, generated_at), loading synchronously
@@ -774,6 +801,246 @@ async def api_insider_history(request: Request) -> JSONResponse:
 # Company analysis notes. Defaults to the corpus shipped with the repo; point
 # INVEST_NOTES_DIR at your own directory to keep your notes separate from it.
 NOTES_DIR = Path(os.environ.get("INVEST_NOTES_DIR") or REPO_ROOT / "notes" / "companies")
+STOCK_CACHE_DIR = Path(os.environ.get("INVEST_STOCK_CACHE_DIR") or REPO_ROOT / "data" / "stock_cache")
+
+
+def _calculate_llm_score(llm_val: dict, current_price: float | None = None) -> tuple[float | None, bool, dict]:
+    """Compute risk-adjusted LLM score:
+    - Verdict tier: BUY (100) / WATCH (0) / PASS (-100) / None (-200)
+    - Entry actionable bonus: +50 if price <= entry_price and entry_price > 0
+    - Reward/risk: min(ev_pct / max(abs(bear_return), 10.0), 10.0) * conviction_weight (HIGH: 1.9, MED-HIGH: 1.6, MED: 1.3, LOW: 1.0)
+    Returns (score, has_valid_llm, details).
+    """
+    if not isinstance(llm_val, dict) or not llm_val:
+        return None, False, {}
+
+    details = llm_val.get("details", {})
+    if isinstance(details, str):
+        try:
+            details = json.loads(details)
+        except (json.JSONDecodeError, TypeError):
+            details = {}
+    elif not isinstance(details, dict):
+        details = {}
+
+    verdict = details.get("verdict") or llm_val.get("verdict")
+    verdict_str = str(verdict).strip().upper() if verdict else ""
+
+    if verdict_str == "BUY":
+        verdict_tier = 100
+        has_valid_llm = True
+    elif verdict_str == "WATCH":
+        verdict_tier = 0
+        has_valid_llm = True
+    elif verdict_str == "PASS":
+        verdict_tier = -100
+        has_valid_llm = True
+    else:
+        verdict_tier = -200
+        has_valid_llm = False
+
+    if not has_valid_llm:
+        return None, False, details
+
+    entry_price = details.get("entry_price") or llm_val.get("entry_price")
+    actionable_bonus = 0
+    try:
+        if current_price is not None and entry_price is not None:
+            p = float(current_price)
+            ep = float(entry_price)
+            if ep > 0 and p > 0 and p <= ep:
+                actionable_bonus = 50
+    except (ValueError, TypeError):
+        pass
+
+    ev_pct = details.get("expected_value_pct")
+    if ev_pct is None:
+        ev_pct = llm_val.get("upside") or llm_val.get("expected_value_pct")
+    try:
+        ev_val = float(ev_pct) if ev_pct is not None else 0.0
+    except (ValueError, TypeError):
+        ev_val = 0.0
+
+    scenarios = details.get("scenarios") or llm_val.get("scenarios") or {}
+    bear_return = None
+    if isinstance(scenarios, dict):
+        for s_name, s_val in scenarios.items():
+            if "bear" in str(s_name).lower():
+                if isinstance(s_val, dict):
+                    bear_return = s_val.get("return_pct")
+                elif isinstance(s_val, (int, float)):
+                    bear_return = float(s_val)
+    if bear_return is None and "bear" in details:
+        b = details["bear"]
+        if isinstance(b, dict):
+            bear_return = b.get("return_pct")
+        elif isinstance(b, (int, float)):
+            bear_return = float(b)
+
+    try:
+        if bear_return is not None:
+            denom = max(abs(float(bear_return)), 10.0)
+        else:
+            denom = 10.0
+        rr_ratio = min(ev_val / denom, 10.0)
+    except (ValueError, TypeError):
+        rr_ratio = 0.0
+
+    conviction = details.get("conviction") or llm_val.get("conviction") or ""
+    conv_str = str(conviction).strip().upper()
+    if "MED" in conv_str and "HIGH" in conv_str:
+        conviction_weight = 1.6
+    elif "HIGH" in conv_str:
+        conviction_weight = 1.9
+    elif "MED" in conv_str:
+        conviction_weight = 1.3
+    elif "LOW" in conv_str:
+        conviction_weight = 1.0
+    else:
+        conviction_weight = 1.0
+
+    reward_risk = rr_ratio * conviction_weight
+    score = verdict_tier + actionable_bonus + reward_risk
+    return round(score, 2), True, details
+
+
+def _build_notes_catalog(stocks_data: dict) -> list[dict]:
+    catalog = []
+    for ticker, stock in stocks_data.items():
+        if not isinstance(stock, dict):
+            continue
+
+        current_price = stock.get("current_price")
+        valuations = stock.get("valuations", {}) if isinstance(stock.get("valuations"), dict) else {}
+        llm_val = valuations.get("llm_deep_analysis", {}) if isinstance(valuations, dict) else {}
+
+        score, has_valid_llm, details = _calculate_llm_score(llm_val, current_price)
+
+        # Check note availability against NOTES_DIR
+        folder_note = NOTES_DIR / ticker / "thesis.md"
+        flat_note = NOTES_DIR / f"{ticker}.md"
+        has_note = folder_note.is_file() or flat_note.is_file()
+        has_visual = (NOTES_DIR / ticker / "visual-report.html").is_file()
+
+        entry_price = details.get("entry_price") or (llm_val.get("entry_price") if isinstance(llm_val, dict) else None)
+        entry_actionable = None
+        try:
+            if current_price is not None and entry_price is not None:
+                p = float(current_price)
+                ep = float(entry_price)
+                if ep > 0 and p > 0:
+                    entry_actionable = p <= ep
+        except (ValueError, TypeError):
+            pass
+
+        # Best margin of safety across non-failed valuations
+        margins = []
+        for m_name, m_val in valuations.items():
+            if isinstance(m_val, dict) and not m_val.get("failed", False):
+                margin = m_val.get("margin_of_safety")
+                if margin is not None:
+                    try:
+                        margins.append(float(margin))
+                    except (ValueError, TypeError):
+                        pass
+        best_margin = max(margins) if margins else None
+
+        item = {
+            "ticker": ticker,
+            "company_name": stock.get("company_name", ticker),
+            "current_price": current_price,
+            "currency": stock.get("currency"),
+            "sector": stock.get("sector"),
+            "industry": stock.get("industry"),
+            "country": stock.get("country"),
+            "status": stock.get("status", "completed"),
+            "has_note": has_note,
+            "note_available": has_note,
+            "has_visual": has_visual,
+            "has_llm": has_valid_llm,
+            "verdict": details.get("verdict") or (llm_val.get("verdict") if isinstance(llm_val, dict) else None),
+            "conviction": details.get("conviction") or (llm_val.get("conviction") if isinstance(llm_val, dict) else None),
+            "expected_value_pct": details.get("expected_value_pct") if details.get("expected_value_pct") is not None else (llm_val.get("upside") if isinstance(llm_val, dict) else None),
+            "target_price": (llm_val.get("fair_value") if isinstance(llm_val, dict) else None),
+            "fair_value": (llm_val.get("fair_value") if isinstance(llm_val, dict) else None),
+            "entry_price": entry_price,
+            "thesis_break_price": details.get("thesis_break_price"),
+            "quality_score": details.get("quality_score"),
+            "entry_actionable": entry_actionable,
+            "risk_adjusted_score": score,
+            "llm_score": score,
+            "best_margin": best_margin,
+            "scenarios": details.get("scenarios") or (llm_val.get("scenarios") if isinstance(llm_val, dict) else {}),
+            "valuations": valuations,
+        }
+        catalog.append(item)
+
+    def sort_key(item):
+        has_llm_key = 0 if item["has_llm"] else 1
+        score_val = item["risk_adjusted_score"] if item["risk_adjusted_score"] is not None else -999999.0
+        margin_val = item["best_margin"] if item["best_margin"] is not None else -999.0
+        return (has_llm_key, -score_val, -margin_val, item["ticker"])
+
+    catalog.sort(key=sort_key)
+    return catalog
+
+
+async def api_notes_catalog(request: Request) -> JSONResponse:
+    """Return a JSON list of all stocks enriched with LLM rating metrics and note availability."""
+    _touch_activity()
+    catalog = snapshot_cache.get_notes_catalog()
+    return JSONResponse(_json_safe(catalog), headers={"Cache-Control": "no-store"})
+
+
+async def api_notes_ticker_data(request: Request) -> JSONResponse:
+    """Return fundamentals, financial statements, and price data from stock_cache."""
+    _touch_activity()
+    raw_ticker = request.path_params.get("ticker", "").strip()
+    if not raw_ticker or not re.match(r"^[A-Za-z0-9._-]+$", raw_ticker):
+        return JSONResponse({"error": "Invalid ticker", "ticker": raw_ticker}, status_code=400)
+
+    ticker = raw_ticker.upper()
+    cache_file = STOCK_CACHE_DIR / f"{ticker}.json"
+    if not cache_file.is_file():
+        cache_file = STOCK_CACHE_DIR / f"{raw_ticker}.json"
+        if not cache_file.is_file():
+            return JSONResponse(
+                {
+                    "error": f"No cached data found for {ticker}",
+                    "ticker": ticker,
+                    "info": {},
+                    "financials": {},
+                    "price_data": {},
+                    "financial_statements_currency": None,
+                    "income": {},
+                    "balance_sheet": {},
+                    "cashflow": {},
+                },
+                status_code=404,
+            )
+
+    try:
+        content = cache_file.read_text(encoding="utf-8")
+        if not content.strip():
+            return JSONResponse({"error": f"Empty data for {ticker}", "ticker": ticker}, status_code=404)
+        data = json.loads(content)
+        if not data or not isinstance(data, dict):
+            return JSONResponse({"error": f"Empty data for {ticker}", "ticker": ticker}, status_code=404)
+    except Exception as exc:
+        logger.warning("Error reading stock cache for %s: %s", ticker, exc)
+        return JSONResponse({"error": f"Failed to read cache for {ticker}", "ticker": ticker}, status_code=500)
+
+    payload = {
+        "ticker": data.get("ticker", ticker),
+        "info": data.get("info", {}),
+        "financials": data.get("financials", {}),
+        "price_data": data.get("price_data", {}),
+        "financial_statements_currency": data.get("financial_statements_currency"),
+        "income": data.get("income", {}),
+        "balance_sheet": data.get("balance_sheet", {}),
+        "cashflow": data.get("cashflow", {}),
+    }
+    return JSONResponse(_json_safe(payload), headers={"Cache-Control": "no-store"})
 
 
 async def api_notes(request: Request):
@@ -809,56 +1076,750 @@ async def api_notes(request: Request):
         )
 
     content = md_path.read_text(encoding="utf-8")
-    header_bar = _build_notes_header_html(ticker, content, has_visual_report=has_visual)
+    from notes_view import render_notes_page
 
-    # Simple markdown-to-HTML: use Python markdown if available, else serve raw
-    try:
-        import markdown
-
-        body = markdown.markdown(content, extensions=["tables", "fenced_code"])
-    except ImportError:
-        body = f"<pre style='white-space:pre-wrap;'>{content}</pre>"
-
-    html = (
-        f"<html><head><title>{ticker} - Analysis</title>"
-        f"<meta name='color-scheme' content='light dark'>"
-        f"<meta name='viewport' content='width=device-width, initial-scale=1'>"
-        f"<style>"
-        f":root {{ color-scheme: light dark; --background:#fff; --foreground:#1f2328; "
-        f"--heading:#0969da; --border:#d0d7de; --surface:#f6f8fa; --strong:#24292f; }}"
-        f"@media (prefers-color-scheme: dark) {{ :root {{ --background:#0d1117; --foreground:#e0e6ed; "
-        f"--heading:#58a6ff; --border:#30363d; --surface:#161b22; --strong:#f0f6fc; }} }}"
-        f"body {{ background:var(--background); color:var(--foreground); font-family:system-ui,-apple-system,sans-serif; "
-        f"font-size:20px; padding:48px 64px; max-width:1100px; margin:0 auto; line-height:1.8; }}"
-        f"h1 {{ color:var(--heading); font-size:2.4em; margin-top:1.2em; margin-bottom:0.6em; font-weight:700; "
-        f"border-bottom:1px solid var(--border); padding-bottom:0.3em; }}"
-        f"h2 {{ color:var(--heading); font-size:1.7em; margin-top:1.5em; margin-bottom:0.5em; font-weight:600; }}"
-        f"h3 {{ color:var(--heading); font-size:1.3em; margin-top:1.3em; margin-bottom:0.4em; font-weight:600; }}"
-        f"p {{ margin-bottom:0.9em; }}"
-        f"ul,ol {{ margin-bottom:1em; padding-left:1.5em; }} li {{ margin-bottom:0.35em; }}"
-        f"strong {{ color:var(--strong); }}"
-        f"a {{ color:var(--heading); }}"
-        f"code {{ background:var(--surface); padding:2px 7px; border-radius:4px; font-size:0.88em; }}"
-        f"pre {{ background:var(--surface); padding:18px; border-radius:8px; overflow-x:auto; font-size:0.88em; }}"
-        f"table {{ border-collapse:collapse; width:100%; font-size:1em; margin:1.2em 0; }} "
-        f"th,td {{ border:1px solid var(--border); padding:12px 16px; text-align:left; }}"
-        f"th {{ background:var(--surface); font-weight:600; color:var(--strong); }}"
-        f"tr:hover {{ background:rgba(88,166,255,0.04); }}"
-        f"@media(max-width:700px){{ body {{ padding:20px 14px; font-size:17px; }} }}"
-        f".note-toolbar {{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:28px; padding-bottom:18px; border-bottom:1px solid var(--border); }}"
-        f".toolbar-left, .toolbar-right {{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }}"
-        f".nav-btn {{ display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border:1px solid var(--border); border-radius:6px; color:var(--heading); text-decoration:none; font-size:13px; font-weight:500; line-height:1.2; background:var(--surface); transition:background 0.15s, border-color 0.15s; }}"
-        f".nav-btn:hover {{ background:rgba(88,166,255,0.12); border-color:var(--heading); color:var(--heading); }}"
-        f".nav-btn.back-btn {{ font-weight:600; }}"
-        f".nav-btn.highlight-btn {{ background:var(--heading); color:#fff; border-color:var(--heading); }}"
-        f".nav-btn.highlight-btn:hover {{ opacity:0.9; color:#fff; }}"
-        f"</style></head><body>{header_bar}{body}</body></html>"
-    )
+    catalog = snapshot_cache._catalog_cache
+    html = render_notes_page(ticker, content, has_visual_report=has_visual, notes_catalog=catalog)
     return HTMLResponse(html)
+
+
+def _build_notes_chart_engine() -> str:
+    """Build the client-side interactive TIKR-style table-to-chart engine."""
+    return """
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+/* TIKR Interactive Chart Engine */
+.tikr-chart-widget {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 26px 18px;
+  margin: 32px 0 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 0.2s ease;
+}
+.tikr-chart-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.tikr-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tikr-metric-name {
+  font-size: 1.25em;
+  font-weight: 700;
+  color: var(--heading);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tikr-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tikr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tikr-badge-val {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--heading);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+}
+.tikr-badge-growth {
+  background: rgba(46, 160, 67, 0.15);
+  color: #2ea043;
+  border: 1px solid rgba(46, 160, 67, 0.3);
+}
+.tikr-badge-neg {
+  background: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+  border: 1px solid rgba(248, 81, 73, 0.3);
+}
+.tikr-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tikr-btn-group {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tikr-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tikr-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+.tikr-btn:hover {
+  background: var(--surface);
+  color: var(--heading);
+}
+.tikr-btn.active {
+  background: var(--heading);
+  color: #fff;
+}
+.tikr-toggle-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tikr-toggle-btn:hover {
+  border-color: var(--heading);
+}
+.tikr-toggle-btn.active {
+  background: rgba(130, 80, 223, 0.18);
+  border-color: #8250df;
+  color: #8250df;
+}
+.tikr-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.tikr-pill-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--foreground);
+  opacity: 0.6;
+  margin-right: 4px;
+}
+.tikr-pill {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tikr-pill:hover {
+  border-color: var(--heading);
+  color: var(--heading);
+}
+.tikr-pill.active {
+  background: var(--heading);
+  border-color: var(--heading);
+  color: #fff;
+  font-weight: 600;
+}
+.tikr-canvas-container {
+  position: relative;
+  height: 290px;
+  width: 100%;
+}
+.tikr-footer-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--foreground);
+  opacity: 0.7;
+}
+
+/* Table Interactive States */
+tr.tikr-clickable-row {
+  cursor: pointer;
+  transition: background 0.12s, border-left 0.12s;
+}
+tr.tikr-clickable-row:hover td {
+  background: rgba(88, 166, 255, 0.08) !important;
+}
+tr.tikr-clickable-row.active-row td {
+  background: rgba(88, 166, 255, 0.14) !important;
+  font-weight: 600;
+}
+tr.tikr-clickable-row.active-row td:first-child {
+  border-left: 4px solid var(--heading) !important;
+  color: var(--heading);
+}
+.tikr-row-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: var(--heading);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+tr.tikr-clickable-row:hover .tikr-row-dot {
+  opacity: 0.5;
+}
+tr.tikr-clickable-row.active-row .tikr-row-dot {
+  opacity: 1;
+}
+
+/* Scenario Target Visualization */
+.scenario-chart-widget {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 28px 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+.scenario-chart-title {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 6px;
+}
+.scenario-chart-sub {
+  font-size: 0.85em;
+  color: var(--foreground);
+  opacity: 0.75;
+  margin-bottom: 18px;
+}
+.scenario-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.scenario-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.scenario-bar-name {
+  width: 140px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--strong);
+}
+.scenario-bar-track-wrap {
+  flex: 1;
+  position: relative;
+  height: 28px;
+  background: rgba(127,127,127,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.scenario-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scenario-bar-meta {
+  width: 120px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+}
+</style>
+
+<script>
+(function() {
+  function parseValue(text) {
+    if (!text) return null;
+    const clean = text.replace(/<[^>]+>/g, '').trim();
+    const m = clean.match(/([+-]?)\\s*[$€¥£]?\\s*([0-9]+(?:,[0-9]+)*(?:\\.[0-9]+)?)\\s*([BMK%xX]?)/i);
+    if (!m) return null;
+    const sign = m[1] === '-' ? -1 : 1;
+    const val = parseFloat(m[2].replace(/,/g, '')) * sign;
+    const suffix = (m[3] || '').toUpperCase();
+    const isPercent = clean.includes('%');
+    const isMultiple = clean.toLowerCase().includes('x');
+    const isCurrency = /[$€¥£]/.test(clean);
+    return { val, suffix, raw: clean, isPercent, isMultiple, isCurrency };
+  }
+
+  const PALETTE = [
+    { border: '#0969da', bg: 'rgba(9, 105, 218, 0.18)', darkBorder: '#58a6ff', darkBg: 'rgba(88, 166, 255, 0.18)' },
+    { border: '#2da44e', bg: 'rgba(45, 164, 78, 0.18)', darkBorder: '#3fb950', darkBg: 'rgba(63, 185, 80, 0.18)' },
+    { border: '#8250df', bg: 'rgba(130, 80, 223, 0.18)', darkBorder: '#bc8cff', darkBg: 'rgba(188, 140, 255, 0.18)' },
+    { border: '#d97706', bg: 'rgba(217, 119, 6, 0.18)', darkBorder: '#f59e0b', darkBg: 'rgba(245, 158, 11, 0.18)' },
+    { border: '#cf222e', bg: 'rgba(207, 34, 46, 0.18)', darkBorder: '#f85149', darkBg: 'rgba(248, 81, 73, 0.18)' }
+  ];
+
+  function isDark() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function initTikrTable(table) {
+    const ths = Array.from(table.querySelectorAll('th'));
+    if (!ths.length) return;
+
+    const timeColIndices = [];
+    const timeLabels = [];
+
+    ths.forEach((th, idx) => {
+      if (idx === 0) return;
+      const text = th.innerText.trim();
+      const isCAGR = /cagr|growth|change|comment/i.test(text);
+      const hasTime = /\\b(19\\d\\d|20\\d\\d|Q[1-4]|H[1-2]|FY\\d\\d|LTM|TTM)\\b/i.test(text);
+      if (hasTime && !isCAGR) {
+        timeColIndices.push(idx);
+        let clean = text.replace(/\\(.*?\\)/g, '').trim();
+        timeLabels.push(clean || text);
+      }
+    });
+
+    if (timeColIndices.length < 2) return;
+
+    const trs = Array.from(table.querySelectorAll('tr')).filter(tr => tr.querySelectorAll('td').length > 0);
+    const parsedRows = [];
+
+    trs.forEach((tr, rowIdx) => {
+      const tds = Array.from(tr.querySelectorAll('td'));
+      if (tds.length <= Math.max(...timeColIndices)) return;
+
+      const metricCell = tds[0];
+      const metricName = metricCell.innerText.replace(/\\*\\*/g, '').trim();
+      const values = timeColIndices.map(colIdx => parseValue(tds[colIdx].innerText));
+      const validCount = values.filter(v => v !== null).length;
+
+      if (validCount >= 2) {
+        parsedRows.push({
+          idx: rowIdx,
+          tr: tr,
+          metricName: metricName,
+          values: values,
+          summary: tds[tds.length - 1] ? tds[tds.length - 1].innerText.trim() : ''
+        });
+
+        tr.classList.add('tikr-clickable-row');
+        const dot = document.createElement('span');
+        dot.className = 'tikr-row-dot';
+        metricCell.prepend(dot);
+      }
+    });
+
+    if (!parsedRows.length) return;
+
+    // Create Chart Widget Element
+    const widget = document.createElement('div');
+    widget.className = 'tikr-chart-widget';
+
+    widget.innerHTML = `
+      <div class="tikr-chart-header">
+        <div class="tikr-title-group">
+          <div class="tikr-metric-name">
+            <span class="chart-icon">📈</span>
+            <span class="title-text">Loading...</span>
+          </div>
+          <div class="tikr-meta-badges">
+            <span class="tikr-badge tikr-badge-val latest-badge">-</span>
+            <span class="tikr-badge tikr-badge-growth growth-badge">-</span>
+          </div>
+        </div>
+        <div class="tikr-controls">
+          <div class="tikr-btn-group">
+            <button class="tikr-btn active btn-area" type="button">Area</button>
+            <button class="tikr-btn btn-bar" type="button">Bar</button>
+          </div>
+          <button class="tikr-toggle-btn btn-compare" type="button">➕ Compare</button>
+        </div>
+      </div>
+      <div class="tikr-pills-row">
+        <span class="tikr-pill-label">Quick Jump:</span>
+      </div>
+      <div class="tikr-canvas-container">
+        <canvas class="tikr-canvas"></canvas>
+      </div>
+      <div class="tikr-footer-hint">
+        <span>💡 <b>TIKR Mode:</b> Click any table row to plot it. Shift+click to compare metrics.</span>
+        <span class="point-count-label"></span>
+      </div>
+    `;
+
+    table.parentNode.insertBefore(widget, table);
+
+    // Populate quick jump pills
+    const pillsRow = widget.querySelector('.tikr-pills-row');
+    const priorityKeywords = ['Revenue', 'EBITDA', 'Net Income', 'Operating Cash Flow', 'Free Cash Flow', 'Net Debt'];
+    const quickItems = [];
+
+    priorityKeywords.forEach(kw => {
+      const found = parsedRows.find(r => r.metricName.toLowerCase().includes(kw.toLowerCase()));
+      if (found && !quickItems.includes(found)) {
+        quickItems.push(found);
+      }
+    });
+
+    quickItems.forEach(item => {
+      const pill = document.createElement('button');
+      pill.className = 'tikr-pill';
+      pill.type = 'button';
+      pill.textContent = item.metricName.split('(')[0].trim();
+      pill.addEventListener('click', () => {
+        selectSingleRow(item);
+      });
+      pillsRow.appendChild(pill);
+    });
+
+    const canvas = widget.querySelector('.tikr-canvas');
+    let chartType = 'line';
+    let compareMode = false;
+    let selectedRows = [parsedRows[0]];
+
+    let chartInstance = null;
+
+    function buildDatasets() {
+      const dark = isDark();
+      return selectedRows.map((row, idx) => {
+        const pal = PALETTE[idx % PALETTE.length];
+        const borderColor = dark ? pal.darkBorder : pal.border;
+        const bgColor = dark ? pal.darkBg : pal.bg;
+        const dataVals = row.values.map(v => v ? v.val : null);
+
+        return {
+          label: row.metricName,
+          data: dataVals,
+          borderColor: borderColor,
+          backgroundColor: chartType === 'line' ? bgColor : borderColor,
+          fill: chartType === 'line',
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: borderColor,
+          borderRadius: 4
+        };
+      });
+    }
+
+    function renderChart() {
+      if (!window.Chart) return;
+      const dark = isDark();
+      const gridColor = dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+      const textColor = dark ? '#e0e6ed' : '#1f2328';
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const datasets = buildDatasets();
+      const firstRow = selectedRows[0];
+      const isPercent = firstRow.values.some(v => v && v.isPercent);
+      const isMultiple = firstRow.values.some(v => v && v.isMultiple);
+
+      chartInstance = new Chart(canvas, {
+        type: chartType,
+        data: {
+          labels: timeLabels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              display: selectedRows.length > 1,
+              labels: { color: textColor, font: { weight: '600' } }
+            },
+            tooltip: {
+              backgroundColor: dark ? '#161b22' : '#ffffff',
+              titleColor: dark ? '#58a6ff' : '#0969da',
+              bodyColor: textColor,
+              borderColor: dark ? '#30363d' : '#d0d7de',
+              borderWidth: 1,
+              padding: 10,
+              boxPadding: 4,
+              callbacks: {
+                label: function(ctx) {
+                  const r = selectedRows[ctx.datasetIndex];
+                  const rawVal = r && r.values[ctx.dataIndex] ? r.values[ctx.dataIndex].raw : ctx.formattedValue;
+                  return ' ' + ctx.dataset.label + ': ' + rawVal;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { weight: '600' } }
+            },
+            y: {
+              grid: { color: gridColor },
+              ticks: {
+                color: textColor,
+                callback: function(val) {
+                  if (isPercent) return val + '%';
+                  if (isMultiple) return val + 'x';
+                  return val;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      updateHeader();
+      updateTableHighlight();
+    }
+
+    function updateHeader() {
+      const titleEl = widget.querySelector('.title-text');
+      const latestBadge = widget.querySelector('.latest-badge');
+      const growthBadge = widget.querySelector('.growth-badge');
+      const countLabel = widget.querySelector('.point-count-label');
+
+      if (selectedRows.length === 1) {
+        const row = selectedRows[0];
+        titleEl.textContent = row.metricName;
+        const validVals = row.values.filter(v => v !== null);
+        const latest = validVals.length ? validVals[validVals.length - 1] : null;
+        latestBadge.textContent = latest ? 'Latest: ' + latest.raw : '';
+        latestBadge.style.display = latest ? 'inline-flex' : 'none';
+
+        if (row.summary) {
+          growthBadge.textContent = row.summary;
+          growthBadge.className = 'tikr-badge ' + (row.summary.includes('-') ? 'tikr-badge-neg' : 'tikr-badge-growth');
+          growthBadge.style.display = 'inline-flex';
+        } else {
+          growthBadge.style.display = 'none';
+        }
+      } else {
+        titleEl.textContent = 'Comparing ' + selectedRows.length + ' Metrics';
+        latestBadge.textContent = selectedRows.map(r => r.metricName.split('(')[0].trim()).join(' vs ');
+        latestBadge.style.display = 'inline-flex';
+        growthBadge.style.display = 'none';
+      }
+
+      countLabel.textContent = timeLabels.length + ' periods (' + timeLabels[0] + ' – ' + timeLabels[timeLabels.length - 1] + ')';
+    }
+
+    function updateTableHighlight() {
+      parsedRows.forEach(r => {
+        const isSel = selectedRows.includes(r);
+        r.tr.classList.toggle('active-row', isSel);
+      });
+
+      // Update pills
+      widget.querySelectorAll('.tikr-pill').forEach(pill => {
+        const match = selectedRows.some(r => r.metricName.toLowerCase().startsWith(pill.textContent.toLowerCase()));
+        pill.classList.toggle('active', match);
+      });
+    }
+
+    function selectSingleRow(row) {
+      selectedRows = [row];
+      renderChart();
+    }
+
+    function toggleRow(row) {
+      const idx = selectedRows.indexOf(row);
+      if (idx >= 0) {
+        if (selectedRows.length > 1) {
+          selectedRows.splice(idx, 1);
+        }
+      } else {
+        if (selectedRows.length >= 5) selectedRows.shift();
+        selectedRows.push(row);
+      }
+      renderChart();
+    }
+
+    // Attach row clicks
+    parsedRows.forEach(r => {
+      r.tr.addEventListener('click', (e) => {
+        if (compareMode || e.shiftKey || e.metaKey || e.ctrlKey) {
+          toggleRow(r);
+        } else {
+          selectSingleRow(r);
+        }
+      });
+    });
+
+    // Controls
+    const btnArea = widget.querySelector('.btn-area');
+    const btnBar = widget.querySelector('.btn-bar');
+    const btnCompare = widget.querySelector('.btn-compare');
+
+    btnArea.addEventListener('click', () => {
+      chartType = 'line';
+      btnArea.classList.add('active');
+      btnBar.classList.remove('active');
+      renderChart();
+    });
+
+    btnBar.addEventListener('click', () => {
+      chartType = 'bar';
+      btnBar.classList.add('active');
+      btnArea.classList.remove('active');
+      renderChart();
+    });
+
+    btnCompare.addEventListener('click', () => {
+      compareMode = !compareMode;
+      btnCompare.classList.toggle('active', compareMode);
+      btnCompare.textContent = compareMode ? '✓ Compare (ON)' : '➕ Compare';
+    });
+
+    // Initial render
+    renderChart();
+  }
+
+  function initScenarioChart(table) {
+    const ths = Array.from(table.querySelectorAll('th')).map(th => th.innerText.toLowerCase());
+    const isScenarioTable = ths.some(h => h.includes('scenario')) && ths.some(h => h.includes('target') || h.includes('return'));
+    if (!isScenarioTable) return;
+
+    const targetColIdx = ths.findIndex(h => h.includes('target') || h.includes('fair value'));
+    const returnColIdx = ths.findIndex(h => h.includes('return') || h.includes('upside'));
+    if (targetColIdx < 0) return;
+
+    const trs = Array.from(table.querySelectorAll('tr')).filter(tr => tr.querySelectorAll('td').length > targetColIdx);
+    const scenarios = [];
+
+    trs.forEach(tr => {
+      const tds = Array.from(tr.querySelectorAll('td'));
+      const name = tds[0].innerText.replace(/\\*\\*/g, '').trim();
+      const targetText = tds[targetColIdx].innerText.trim();
+      const returnText = returnColIdx >= 0 && tds[returnColIdx] ? tds[returnColIdx].innerText.trim() : '';
+
+      const valMatch = targetText.match(/[$€¥£]?\\s*([0-9]+(?:\\.[0-9]+)?)/);
+      if (valMatch) {
+        const val = parseFloat(valMatch[1]);
+        scenarios.push({
+          name: name,
+          val: val,
+          targetRaw: targetText,
+          returnRaw: returnText
+        });
+      }
+    });
+
+    if (scenarios.length < 2) return;
+
+    // Detect current price from page header if possible
+    let currentPrice = null;
+    const bodyText = document.body.innerText;
+    const priceMatch = bodyText.match(/Price:\\*?\\*?\\s*[$€¥£]?([0-9]+(?:\\.[0-9]+)?)/i);
+    if (priceMatch) {
+      currentPrice = parseFloat(priceMatch[1]);
+    }
+
+    const maxVal = Math.max(...scenarios.map(s => s.val), currentPrice || 0) * 1.15;
+
+    const widget = document.createElement('div');
+    widget.className = 'scenario-chart-widget';
+    widget.innerHTML = `
+      <div class="scenario-chart-title">🎯 Valuation Scenario & Target Price Distribution</div>
+      <div class="scenario-chart-sub">Visual price target comparison relative to current market price (${currentPrice ? 'Current: €' + currentPrice.toFixed(2) : ''})</div>
+      <div class="scenario-bar-list"></div>
+    `;
+
+    const list = widget.querySelector('.scenario-bar-list');
+
+    // Add current price benchmark
+    if (currentPrice) {
+      const pct = (currentPrice / maxVal) * 100;
+      const curRow = document.createElement('div');
+      curRow.className = 'scenario-bar-row';
+      curRow.innerHTML = `
+        <div class="scenario-bar-name">📍 Current Price</div>
+        <div class="scenario-bar-track-wrap">
+          <div class="scenario-bar-fill" style="width: ${pct}%; background: var(--heading); opacity: 0.85;">
+            €${currentPrice.toFixed(2)}
+          </div>
+        </div>
+        <div class="scenario-bar-meta">Market Anchor</div>
+      `;
+      list.appendChild(curRow);
+    }
+
+    scenarios.forEach(s => {
+      const pct = (s.val / maxVal) * 100;
+      let color = '#0969da';
+      if (s.name.toLowerCase().includes('bull')) color = '#2ea043';
+      else if (s.name.toLowerCase().includes('bear')) color = '#cf222e';
+      else if (s.name.toLowerCase().includes('base')) color = '#0969da';
+
+      const row = document.createElement('div');
+      row.className = 'scenario-bar-row';
+      row.innerHTML = `
+        <div class="scenario-bar-name">${s.name} Case</div>
+        <div class="scenario-bar-track-wrap">
+          <div class="scenario-bar-fill" style="width: ${pct}%; background: ${color};">
+            ${s.targetRaw}
+          </div>
+        </div>
+        <div class="scenario-bar-meta" style="color: ${s.returnRaw.includes('-') ? '#cf222e' : '#2ea043'};">
+          ${s.returnRaw}
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    table.parentNode.insertBefore(widget, table);
+  }
+
+  function init() {
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+      initTikrTable(table);
+      initScenarioChart(table);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+"""
 
 
 _TIKR_CACHE_FILE = REPO_ROOT / "data" / "tikr_cache.json"
 _TIKR_CACHE: dict[str, str] = {}
+
 
 
 def _resolve_tikr_url(ticker: str, company_name: str = "") -> str:
@@ -977,7 +1938,7 @@ def _build_notes_header_html(ticker: str, content: str, has_visual_report: bool 
 
     # Secondary heuristic for website: check data/stock_cache if present
     if not website_url:
-        cache_file = REPO_ROOT / "data" / "stock_cache" / f"{ticker}.json"
+        cache_file = STOCK_CACHE_DIR / f"{ticker}.json"
         if cache_file.is_file():
             try:
                 import json
@@ -1058,11 +2019,15 @@ async def api_visual_report(request: Request):
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 def _json_safe(obj):
-    """Recursively convert datetime/date objects to ISO strings for JSON serialization."""
+    """Recursively convert datetime/date objects to ISO strings and NaN/Inf to None for JSON serialization."""
     if isinstance(obj, dict):
         return {k: _json_safe(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_json_safe(v) for v in obj]
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
     if isinstance(obj, datetime):
         return obj.isoformat(timespec="seconds")
     if hasattr(obj, 'isoformat'):
@@ -1107,6 +2072,8 @@ app = Starlette(
         Route("/api/alarms/triggered", api_alarm_triggered),
         Route("/api/alarms/{alarm_id:int}", api_alarm_delete, methods=["DELETE"]),
         Route("/api/insider/{ticker}", api_insider_history),
+        Route("/api/notes/catalog", api_notes_catalog),
+        Route("/api/notes/{ticker}/data", api_notes_ticker_data),
         Route("/api/notes/{ticker}", api_notes),
         Route("/api/notes/{ticker}/visual", api_visual_report),
     ],
