@@ -297,6 +297,46 @@ def render_notes_page(
     </main>
   </div>
 
+  <!-- Mobile Sidebar Backdrop (tap to dismiss) -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- Mobile Bottom Navigation Dock (Thumb-zone reachable) -->
+  <nav class="mobile-bottom-dock" id="mobileBottomDock" aria-label="Mobile navigation">
+    <button class="mobile-dock-btn mobile-dock-sidebar" id="mobileDockSidebarBtn" aria-label="Open Stocks Directory">
+      <svg class="sidebar-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="18" height="18" x="3" y="3" rx="3.5" />
+        <path d="M3 6.5A3.5 3.5 0 0 1 6.5 3H9v18H6.5A3.5 3.5 0 0 1 3 17.5V6.5z" fill="currentColor" stroke="none" />
+      </svg>
+      <span class="dock-label">Stocks</span>
+    </button>
+
+    <div class="mobile-dock-switcher-wrap">
+      <button class="mobile-dock-nav-arrow prev" id="mobileTabPrevBtn" title="Previous tab" aria-label="Previous tab">‹</button>
+      <button class="mobile-dock-tab-btn" id="mobileTabSelectorBtn" aria-label="Select view">
+        <span class="mobile-dock-tab-icon" id="mobileDockTabIcon">📝</span>
+        <span class="mobile-dock-tab-title" id="mobileDockTabTitle">Thesis &amp; Primer</span>
+        <span class="mobile-dock-caret">▾</span>
+      </button>
+      <button class="mobile-dock-nav-arrow next" id="mobileTabNextBtn" title="Next tab" aria-label="Next tab">›</button>
+    </div>
+  </nav>
+
+  <!-- Mobile View Selection Sheet -->
+  <div class="mobile-sheet-backdrop" id="mobileTabSheetBackdrop"></div>
+  <div class="mobile-tab-sheet" id="mobileTabSheet">
+    <div class="mobile-sheet-header">
+      <span class="mobile-sheet-title">Select Analysis View</span>
+      <button class="mobile-sheet-close" id="mobileTabSheetClose" aria-label="Close sheet">&times;</button>
+    </div>
+    <div class="mobile-sheet-list">
+      <button class="mobile-sheet-item active" data-tab="thesis"><span class="sheet-icon">📝</span> Thesis &amp; Primer</button>
+      <button class="mobile-sheet-item" data-tab="financials"><span class="sheet-icon">📊</span> Financial Statements</button>
+      <button class="mobile-sheet-item" data-tab="plotter"><span class="sheet-icon">📈</span> Cross-Plotter</button>
+      <button class="mobile-sheet-item" data-tab="technicals"><span class="sheet-icon">⚡</span> Technical Analysis</button>
+      <button class="mobile-sheet-item" data-tab="valuation"><span class="sheet-icon">🎯</span> Valuation Models</button>
+    </div>
+  </div>
+
   <script>
     window.__CURRENT_TICKER__ = "{ticker_clean}";
     window.__INITIAL_CATALOG__ = {initial_catalog_json};
@@ -388,9 +428,14 @@ def _resolve_tikr_cached(ticker: str, company_name: str = "") -> str:
 def _render_topbar_html(ticker: str, meta: dict, has_visual_report: bool) -> str:
     """Build the company header action toolbar."""
     visual_btn = ""
+    visual_menu_item = ""
     if has_visual_report:
         visual_btn = (
             f'<a class="nav-btn highlight-btn" href="/api/notes/{ticker}/visual" '
+            f'target="_blank" rel="noopener">🎨 Visual Companion</a>'
+        )
+        visual_menu_item = (
+            f'<a class="mobile-more-item highlight-item" href="/api/notes/{ticker}/visual" '
             f'target="_blank" rel="noopener">🎨 Visual Companion</a>'
         )
 
@@ -406,6 +451,9 @@ def _render_topbar_html(ticker: str, meta: dict, has_visual_report: bool) -> str
         f"<a class='nav-btn back-btn' href='/'>← Dashboard</a>"
         f'{visual_btn}'
         f'</div>'
+        f'<div class="mobile-topbar-title">'
+        f'<span class="mobile-ticker-badge">{ticker}</span>'
+        f'</div>'
         f'<div class="toolbar-right">'
         f'<a class="nav-btn" href="{meta["website_url"]}" target="_blank" rel="noopener">{meta["web_label"]}</a>'
         f'<a class="nav-btn" href="{meta["ir_url"]}" target="_blank" rel="noopener">{meta["ir_label"]}</a>'
@@ -414,6 +462,26 @@ def _render_topbar_html(ticker: str, meta: dict, has_visual_report: bool) -> str
         f'<a class="nav-btn" href="https://www.google.com/finance/quote/{ticker}" target="_blank" rel="noopener">🔍 Google Finance</a>'
         f'<a class="nav-btn" href="https://www.tradingview.com/symbols/{ticker}/" target="_blank" rel="noopener">📉 TradingView</a>'
         f'<a class="nav-btn" href="{meta["filings_url"]}" target="_blank" rel="noopener">{meta["filings_label"]}</a>'
+        f'</div>'
+        f'<button class="nav-btn mobile-more-btn" id="mobileMoreBtn" title="More options" aria-label="More options">⋮</button>'
+        f'<div class="mobile-more-backdrop" id="mobileMoreBackdrop"></div>'
+        f'<div class="mobile-more-sheet" id="mobileMoreSheet">'
+        f'<div class="mobile-more-header">'
+        f'<span class="mobile-more-title">{ticker} Quick Actions</span>'
+        f'<button class="mobile-more-close" id="mobileMoreClose" aria-label="Close menu">&times;</button>'
+        f'</div>'
+        f'<div class="mobile-more-list">'
+        f'{visual_menu_item}'
+        f'<a class="mobile-more-item" href="{meta["website_url"]}" target="_blank" rel="noopener">🌐 {meta["web_label"]}</a>'
+        f'<a class="mobile-more-item" href="{meta["ir_url"]}" target="_blank" rel="noopener">💼 {meta["ir_label"]}</a>'
+        f'<a class="mobile-more-item" href="{meta["tikr_url"]}" target="_blank" rel="noopener">📈 TIKR Terminal</a>'
+        f'<a class="mobile-more-item" href="https://finance.yahoo.com/quote/{ticker}" target="_blank" rel="noopener">📊 Yahoo Finance</a>'
+        f'<a class="mobile-more-item" href="https://www.google.com/finance/quote/{ticker}" target="_blank" rel="noopener">🔍 Google Finance</a>'
+        f'<a class="mobile-more-item" href="https://www.tradingview.com/symbols/{ticker}/" target="_blank" rel="noopener">📉 TradingView</a>'
+        f'<a class="mobile-more-item" href="{meta["filings_url"]}" target="_blank" rel="noopener">📑 {meta["filings_label"]}</a>'
+        f'<div class="mobile-more-divider"></div>'
+        f'<a class="mobile-more-item back-link" href="/">← Back to Dashboard</a>'
+        f'</div>'
         f'</div>'
         f'</header>'
     )
@@ -1808,20 +1876,178 @@ tr.tikr-clickable-row.active-row .tikr-row-dot { opacity: 1; }
   margin-bottom: 2px;
 }
 
-/* Responsive adjustments */
+/* Sidebar Backdrop for Mobile */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 88;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.sidebar-backdrop.visible {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile 3-Dot More Sheet & Tab Sheet */
+.mobile-more-btn {
+  display: none;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 4px 10px;
+  line-height: 1;
+  color: var(--heading);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.mobile-topbar-title {
+  display: none;
+}
+.mobile-more-backdrop,
+.mobile-sheet-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 105;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.mobile-more-backdrop.open,
+.mobile-sheet-backdrop.open {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-more-sheet,
+.mobile-tab-sheet {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 18px 18px 0 0;
+  padding: 16px 18px calc(18px + env(safe-area-inset-bottom));
+  z-index: 110;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mobile-more-sheet.open,
+.mobile-tab-sheet.open {
+  display: block;
+  transform: translateY(0);
+}
+
+.mobile-sheet-header,
+.mobile-more-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-sheet-title,
+.mobile-more-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--heading);
+}
+.mobile-sheet-close,
+.mobile-more-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 2px 8px;
+  line-height: 1;
+}
+
+.mobile-sheet-list,
+.mobile-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.mobile-sheet-item,
+.mobile-more-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 48px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.mobile-sheet-item:active,
+.mobile-more-item:active {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+}
+.mobile-sheet-item.active {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.mobile-more-item.highlight-item {
+  background: linear-gradient(135deg, rgba(88, 166, 255, 0.15), rgba(163, 113, 247, 0.15));
+  border-color: var(--accent);
+  color: var(--heading);
+}
+.mobile-more-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+/* Mobile Bottom Navigation Dock */
+.mobile-bottom-dock {
+  display: none;
+}
+
+/* Responsive adjustments for Tablets & Phones */
 @media (max-width: 900px) {
   .stocks-sidebar {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
-    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    z-index: 92;
+    box-shadow: 0 0 30px rgba(0,0,0,0.4);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .app-container.sidebar-collapsed .stocks-sidebar,
   .app-container:not(.sidebar-open) .stocks-sidebar {
-    margin-left: calc(-1 * var(--sidebar-width));
+    transform: translateX(-100%);
+    margin-left: 0 !important;
   }
   .app-container.sidebar-open .stocks-sidebar {
+    transform: translateX(0) !important;
     margin-left: 0 !important;
   }
   .app-container #sidebarOpenBtn {
@@ -1830,7 +2056,169 @@ tr.tikr-clickable-row.active-row .tikr-row-dot { opacity: 1; }
   .tab-panels-container { padding: 18px 14px; }
   .markdown-body { font-size: 16px; }
   .workspace-topbar { padding: 10px 14px; }
-  .notes-nav-tabs { padding: 0 14px; }
+}
+
+/* Phone-specific layout (< 768px) */
+@media (max-width: 768px) {
+  .stocks-sidebar {
+    width: min(340px, 86vw) !important;
+    min-width: unset !important;
+    max-width: 86vw !important;
+  }
+
+  /* Hide desktop top tabs; bottom dock takes over */
+  .notes-nav-tabs {
+    display: none !important;
+  }
+
+  /* Sticky topbar on phone */
+  .workspace-topbar .toolbar-right {
+    display: none !important;
+  }
+  .mobile-more-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+  .mobile-topbar-title {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+  }
+  .mobile-ticker-badge {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent);
+    padding: 2px 8px;
+    background: var(--accent-light);
+    border-radius: 6px;
+    border: 1px solid rgba(88, 166, 255, 0.2);
+  }
+
+  /* Fixed Bottom Dock */
+  .mobile-bottom-dock {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 85;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .mobile-dock-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 12px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--heading);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.12s ease;
+  }
+  .mobile-dock-btn:active {
+    background: var(--surface-hover);
+    border-color: var(--accent);
+  }
+
+  .mobile-dock-switcher-wrap {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .mobile-dock-nav-arrow {
+    background: transparent;
+    border: none;
+    width: 38px;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--foreground);
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .mobile-dock-nav-arrow:active {
+    background: var(--surface-hover);
+    color: var(--accent);
+  }
+
+  .mobile-dock-tab-btn {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .mobile-dock-tab-btn:active {
+    background: var(--surface-hover);
+  }
+
+  .mobile-dock-tab-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .mobile-dock-tab-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--heading);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobile-dock-caret {
+    font-size: 10px;
+    color: var(--foreground);
+    opacity: 0.6;
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Generous bottom padding so fixed dock never covers content */
+  .tab-panels-container {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Suppress desktop hover tooltips on touch devices */
+@media (hover: none), (pointer: coarse) {
+  .fast-tooltip-card {
+    display: none !important;
+  }
 }
 """
 
@@ -1857,6 +2245,7 @@ def _get_javascript() -> str:
   function initWorkstation() {
     setupSidebarToggle();
     setupTabsNavigation();
+    setupMobileControls();
     setupKeyboardShortcuts();
     setupStatementsControls();
     setupCrossPlotterControls();
@@ -1888,24 +2277,45 @@ def _get_javascript() -> str:
     const appContainer = document.getElementById('appContainer');
     const collapseBtn = document.getElementById('sidebarCollapseBtn');
     const openBtn = document.getElementById('sidebarOpenBtn');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const mobileDockBtn = document.getElementById('mobileDockSidebarBtn');
 
-    if (isSidebarCollapsed) {
-      appContainer.classList.add('sidebar-collapsed');
-      appContainer.classList.remove('sidebar-open');
-    } else {
-      appContainer.classList.remove('sidebar-collapsed');
-      appContainer.classList.add('sidebar-open');
+    if (window.innerWidth <= 768 && localStorage.getItem('invest_notes_sidebar_collapsed') === null) {
+      isSidebarCollapsed = true;
     }
+
+    function syncSidebar() {
+      if (isSidebarCollapsed) {
+        appContainer.classList.add('sidebar-collapsed');
+        appContainer.classList.remove('sidebar-open');
+        if (backdrop) backdrop.classList.remove('visible');
+      } else {
+        appContainer.classList.remove('sidebar-collapsed');
+        appContainer.classList.add('sidebar-open');
+        if (backdrop && window.innerWidth <= 900) {
+          backdrop.classList.add('visible');
+        }
+      }
+    }
+
+    syncSidebar();
 
     function toggleSidebar() {
       isSidebarCollapsed = !isSidebarCollapsed;
-      appContainer.classList.toggle('sidebar-collapsed', isSidebarCollapsed);
-      appContainer.classList.toggle('sidebar-open', !isSidebarCollapsed);
+      syncSidebar();
       localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
+    }
+
+    function closeSidebar() {
+      isSidebarCollapsed = true;
+      syncSidebar();
+      localStorage.setItem('invest_notes_sidebar_collapsed', 'true');
     }
 
     if (collapseBtn) collapseBtn.addEventListener('click', toggleSidebar);
     if (openBtn) openBtn.addEventListener('click', toggleSidebar);
+    if (backdrop) backdrop.addEventListener('click', closeSidebar);
+    if (mobileDockBtn) mobileDockBtn.addEventListener('click', toggleSidebar);
 
     // Search input
     const searchInput = document.getElementById('sidebarSearchInput');
@@ -2065,6 +2475,16 @@ def _get_javascript() -> str:
         if (t && t !== currentTicker) {
           navigateTickerPjax(t);
         }
+        // Auto-close drawer on mobile so the user directly sees the analysis
+        if (window.innerWidth <= 900) {
+          const app = document.getElementById('appContainer');
+          const backdrop = document.getElementById('sidebarBackdrop');
+          isSidebarCollapsed = true;
+          app?.classList.add('sidebar-collapsed');
+          app?.classList.remove('sidebar-open');
+          backdrop?.classList.remove('visible');
+          localStorage.setItem('invest_notes_sidebar_collapsed', 'true');
+        }
       });
     });
   }
@@ -2093,15 +2513,8 @@ def _get_javascript() -> str:
       if (newTopbar && curTopbarContainer) {
         curTopbarContainer.innerHTML = '';
         curTopbarContainer.appendChild(newTopbar);
-        // Re-bind topbar buttons
-        const openBtn = document.getElementById('sidebarOpenBtn');
-        if (openBtn) openBtn.addEventListener('click', () => {
-          isSidebarCollapsed = !isSidebarCollapsed;
-          const app = document.getElementById('appContainer');
-          app.classList.toggle('sidebar-collapsed', isSidebarCollapsed);
-          app.classList.toggle('sidebar-open', !isSidebarCollapsed);
-          localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
-        });
+        // Re-bind topbar and mobile more menu controls
+        bindTopbarControls();
       }
 
       // Swap markdown body
@@ -2153,6 +2566,15 @@ def _get_javascript() -> str:
   });
 
   // --- TABS NAVIGATION ---
+  const TAB_ORDER = ['thesis', 'financials', 'plotter', 'technicals', 'valuation'];
+  const TAB_META = {
+    thesis: { icon: '📝', title: 'Thesis & Primer' },
+    financials: { icon: '📊', title: 'Financials' },
+    plotter: { icon: '📈', title: 'Cross-Plotter' },
+    technicals: { icon: '⚡', title: 'Technicals' },
+    valuation: { icon: '🎯', title: 'Valuation' }
+  };
+
   function setupTabsNavigation() {
     const tabs = document.querySelectorAll('#notesNavTabs .nav-tab');
     tabs.forEach(tab => {
@@ -2164,12 +2586,26 @@ def _get_javascript() -> str:
   }
 
   function switchTab(tabId) {
+    if (!TAB_ORDER.includes(tabId)) tabId = 'thesis';
+
     document.querySelectorAll('#notesNavTabs .nav-tab').forEach(t => {
       t.classList.toggle('active', t.getAttribute('data-tab') === tabId);
     });
 
     document.querySelectorAll('.tab-panels-container .tab-panel').forEach(p => {
       p.classList.toggle('active', p.getAttribute('data-panel') === tabId);
+    });
+
+    // Update mobile dock switcher
+    const meta = TAB_META[tabId] || { icon: '📝', title: tabId };
+    const dockIcon = document.getElementById('mobileDockTabIcon');
+    const dockTitle = document.getElementById('mobileDockTabTitle');
+    if (dockIcon) dockIcon.textContent = meta.icon;
+    if (dockTitle) dockTitle.textContent = meta.title;
+
+    // Update active highlight in mobile sheet
+    document.querySelectorAll('.mobile-sheet-item').forEach(item => {
+      item.classList.toggle('active', item.getAttribute('data-tab') === tabId);
     });
 
     window.location.hash = tabId;
@@ -2181,6 +2617,139 @@ def _get_javascript() -> str:
     } else if (tabId === 'technicals') {
       loadTradingView(currentTicker);
     }
+  }
+
+  function nextTab() {
+    const curTab = (window.location.hash || '').replace('#', '') || 'thesis';
+    let idx = TAB_ORDER.indexOf(curTab);
+    if (idx === -1) idx = 0;
+    const nextIdx = (idx + 1) % TAB_ORDER.length;
+    switchTab(TAB_ORDER[nextIdx]);
+  }
+
+  function prevTab() {
+    const curTab = (window.location.hash || '').replace('#', '') || 'thesis';
+    let idx = TAB_ORDER.indexOf(curTab);
+    if (idx === -1) idx = 0;
+    const prevIdx = (idx - 1 + TAB_ORDER.length) % TAB_ORDER.length;
+    switchTab(TAB_ORDER[prevIdx]);
+  }
+
+  // --- MOBILE PHONE CONTROLS (Bottom Dock, 3-Dot Overflow, Sheets) ---
+  function setupMobileControls() {
+    bindTopbarControls();
+
+    const tabSelectorBtn = document.getElementById('mobileTabSelectorBtn');
+    const tabSheet = document.getElementById('mobileTabSheet');
+    const tabSheetBackdrop = document.getElementById('mobileTabSheetBackdrop');
+    const tabSheetClose = document.getElementById('mobileTabSheetClose');
+    const prevBtn = document.getElementById('mobileTabPrevBtn');
+    const nextBtn = document.getElementById('mobileTabNextBtn');
+
+    function closeTabSheet() {
+      if (tabSheet) tabSheet.classList.remove('open');
+      if (tabSheetBackdrop) tabSheetBackdrop.classList.remove('open');
+    }
+
+    if (tabSelectorBtn) {
+      tabSelectorBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = tabSheet?.classList.contains('open');
+        if (isOpen) {
+          closeTabSheet();
+        } else {
+          tabSheet?.classList.add('open');
+          tabSheetBackdrop?.classList.add('open');
+        }
+      });
+    }
+
+    if (tabSheetBackdrop) tabSheetBackdrop.addEventListener('click', closeTabSheet);
+    if (tabSheetClose) tabSheetClose.addEventListener('click', closeTabSheet);
+    if (prevBtn) prevBtn.addEventListener('click', prevTab);
+    if (nextBtn) nextBtn.addEventListener('click', nextTab);
+
+    document.querySelectorAll('.mobile-sheet-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const t = item.getAttribute('data-tab');
+        if (t) switchTab(t);
+        closeTabSheet();
+      });
+    });
+
+    // Touch swipe gestures on workspace
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const workspace = document.getElementById('mainWorkspace');
+    if (workspace) {
+      workspace.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      workspace.addEventListener('touchend', (e) => {
+        if (e.changedTouches.length === 1) {
+          const deltaX = e.changedTouches[0].clientX - touchStartX;
+          const deltaY = e.changedTouches[0].clientY - touchStartY;
+          if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+            if (deltaX < 0) {
+              nextTab();
+            } else {
+              prevTab();
+            }
+          }
+        }
+      }, { passive: true });
+    }
+  }
+
+  function bindTopbarControls() {
+    const openBtn = document.getElementById('sidebarOpenBtn');
+    if (openBtn) {
+      openBtn.onclick = () => {
+        isSidebarCollapsed = !isSidebarCollapsed;
+        const app = document.getElementById('appContainer');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (isSidebarCollapsed) {
+          app?.classList.add('sidebar-collapsed');
+          app?.classList.remove('sidebar-open');
+          if (backdrop) backdrop.classList.remove('visible');
+        } else {
+          app?.classList.remove('sidebar-collapsed');
+          app?.classList.add('sidebar-open');
+          if (backdrop && window.innerWidth <= 900) backdrop.classList.add('visible');
+        }
+        localStorage.setItem('invest_notes_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
+      };
+    }
+
+    const moreBtn = document.getElementById('mobileMoreBtn');
+    const moreSheet = document.getElementById('mobileMoreSheet');
+    const moreBackdrop = document.getElementById('mobileMoreBackdrop');
+    const moreClose = document.getElementById('mobileMoreClose');
+
+    function closeMoreMenu() {
+      if (moreSheet) moreSheet.classList.remove('open');
+      if (moreBackdrop) moreBackdrop.classList.remove('open');
+    }
+
+    if (moreBtn) {
+      moreBtn.onclick = (e) => {
+        e.stopPropagation();
+        const isOpen = moreSheet?.classList.contains('open');
+        if (isOpen) {
+          closeMoreMenu();
+        } else {
+          moreSheet?.classList.add('open');
+          moreBackdrop?.classList.add('open');
+        }
+      };
+    }
+
+    if (moreBackdrop) moreBackdrop.onclick = closeMoreMenu;
+    if (moreClose) moreClose.onclick = closeMoreMenu;
   }
 
   function setupKeyboardShortcuts() {
@@ -3012,6 +3581,9 @@ def _get_javascript() -> str:
 
   // --- FAST TOOLTIPS (1/3rd native hover delay ~220ms) ---
   function initFastTooltips(delayMs = 220) {
+    if (window.matchMedia('(hover: none)').matches || window.innerWidth <= 768) {
+      return; // Suppress hover tooltips on mobile/touch devices
+    }
     let tooltipEl = document.getElementById('fast-tooltip-card');
     if (!tooltipEl) {
       tooltipEl = document.createElement('div');
