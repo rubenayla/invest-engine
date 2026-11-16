@@ -143,3 +143,7 @@ def test_dashboard_renders_signal_history_and_gross_transaction_labels(tmp_path)
     assert 'Dollar conviction' in output
     assert '>Gross buys</text>' in output
     assert '>Gross sells</text>' in output
+    assert 'param-info-icon' in output
+    assert '0–100 composite bullish conviction score' in output
+    assert 'Cluster score | Number of distinct, unique insiders' in output
+    assert 'Dollar conviction | Total dollar value' in output

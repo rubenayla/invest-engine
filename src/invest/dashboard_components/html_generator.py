@@ -3004,6 +3004,33 @@ renderCards();
             font-weight: 700;
             color: var(--accent-bright);
             margin-bottom: 2px;
+        }
+        .param-info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            font-size: 8.5px;
+            font-weight: 700;
+            font-family: var(--font-mono, "Geist Mono", monospace);
+            line-height: 1;
+            color: #738091;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            cursor: help;
+            transition: all 0.15s ease;
+            user-select: none;
+            vertical-align: middle;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .param-info-icon:hover, .param-info-icon:focus {
+            color: var(--accent-bright, #58a6ff);
+            border-color: var(--accent-bright, #58a6ff);
+            background: rgba(88, 166, 255, 0.15);
+            transform: scale(1.15);
         }"""
 
     def _get_javascript(self) -> str:
@@ -3296,7 +3323,27 @@ renderCards();
             }, true);
 
             window.addEventListener('scroll', hide, true);
-            window.addEventListener('click', hide, true);
+            window.addEventListener('click', function(e) {
+                const el = e.target.closest('[title], [data-tooltip]');
+                if (el) {
+                    if (el.hasAttribute('title') && el.getAttribute('title')) {
+                        el.setAttribute('data-tooltip', el.getAttribute('title'));
+                        el.removeAttribute('title');
+                    }
+                    if (activeTarget === el && isVisible) {
+                        hide();
+                        return;
+                    }
+                    const text = el.getAttribute('data-tooltip');
+                    if (text) {
+                        clearTimeout(hoverTimer);
+                        activeTarget = el;
+                        show(el, text, e.clientX, e.clientY);
+                        return;
+                    }
+                }
+                hide();
+            }, true);
         }
 
         // ── Update control ──
@@ -3897,35 +3944,43 @@ renderCards();
                 html += renderInsiderSignalHistory(snapshots);
             }
             if (n) {
-                html += '<h4 style="margin:20px 0 8px; font-size:13px; color:#c9d1d9;">Gross insider transactions</h4>' + renderDualBarChart(months);
+                html += '<h4 style="margin:20px 0 8px; font-size:13px; color:#c9d1d9; display:inline-flex; align-items:center;">Gross insider transactions<span class="param-info-icon" data-tooltip="Gross insider transactions | Monthly breakdown of open-market transactions. Green bars (up) = purchases; red bars (down) = sales. Left bar = transaction count (# txns); Right bar = dollar volume ($ vol). Faded red = compensation selling (vesting &amp; tax).">i</span></h4>' + renderDualBarChart(months);
             }
             container.innerHTML = html;
         }
 
         function renderInsiderSignalHistory(snapshots) {
             const metrics = [
-                ['insider_score', 'Insider score', v => v.toFixed(1), '#ec9a3c'],
-                ['buy_count', 'Gross buys', v => String(v), '#34d399'],
-                ['sell_count', 'Gross sells', v => String(v), '#e76a6e'],
-                ['net_buy_pct', 'Net buy %', v => v.toFixed(1) + '%', '#58a6ff'],
-                ['cluster_score', 'Cluster score', v => String(v), '#a78bfa'],
-                ['dollar_conviction', 'Dollar conviction', fmtDollar, '#63e2c6'],
-                ['sell_trend', 'Sell trend', v => v.toFixed(2) + 'x', '#f0a0a0'],
-                ['buy_trend', 'Buy trend', v => v.toFixed(2) + 'x', '#93c5fd'],
+                ['insider_score', 'Insider score', v => v.toFixed(1), '#ec9a3c',
+                 'Insider score | 0–100 composite bullish conviction score. Higher is more bullish. Evaluates open-market purchases vs sales, unique buyer clustering, total dollar commitment, transaction recency, and selling velocity vs historical baseline. Strictly capped at ≤25–45 when only insider selling occurs.'],
+                ['buy_count', 'Gross buys', v => String(v), '#34d399',
+                 'Gross buys | Total count of open-market purchase transactions filed by company executives and directors over the tracking window (Form 4). Excludes routine stock awards and option grants.'],
+                ['sell_count', 'Gross sells', v => String(v), '#e76a6e',
+                 'Gross sells | Total count of open-market sale transactions filed by company insiders over the tracking window. Excludes routine option exercises and tax withholding sales.'],
+                ['net_buy_pct', 'Net buy %', v => v.toFixed(1) + '%', '#58a6ff',
+                 'Net buy % | Ratio of net insider transaction volume: -100% means all transactions were sales, +100% means all were purchases. Positive values indicate net executive share accumulation; negative values indicate net distribution.'],
+                ['cluster_score', 'Cluster score', v => String(v), '#a78bfa',
+                 'Cluster score | Number of distinct, unique insiders (executives and board members) who bought shares within a rolling 30-day window. Multiple separate insiders buying simultaneously is one of the strongest bullish conviction signals.'],
+                ['dollar_conviction', 'Dollar conviction', fmtDollar, '#63e2c6',
+                 'Dollar conviction | Total dollar value ($ USD) spent on open-market share purchases by company insiders. Measures how much real personal capital leadership has put on the line.'],
+                ['sell_trend', 'Sell trend', v => v.toFixed(2) + 'x', '#f0a0a0',
+                 'Sell trend | Recent insider selling velocity relative to the company’s historical baseline pace. 1.0x = normal selling; >1.0x = accelerated/heavy selling (bearish); <1.0x = selling is lower than normal (mildly bullish).'],
+                ['buy_trend', 'Buy trend', v => v.toFixed(2) + 'x', '#93c5fd',
+                 'Buy trend | Recent insider buying velocity relative to the company’s historical baseline pace. >1.0x indicates an unusual surge in insider buying relative to past patterns.'],
             ];
-            const cards = metrics.map(([key, label, format, color]) =>
-                renderInsiderMetricCard(snapshots, key, label, format, color)).join('');
+            const cards = metrics.map(([key, label, format, color, tooltip]) =>
+                renderInsiderMetricCard(snapshots, key, label, format, color, tooltip)).join('');
             const first = snapshots[0].date;
             const last = snapshots[snapshots.length - 1].date;
             return '<section style="margin-bottom:18px;">' +
-                '<h4 style="margin:0 0 4px; font-size:13px; color:#c9d1d9;">Historical insider signal</h4>' +
+                '<h4 style="margin:0 0 4px; font-size:13px; color:#c9d1d9; display:inline-flex; align-items:center;">Historical insider signal<span class="param-info-icon" data-tooltip="Historical insider signal | Daily tracking of composite insider metrics over time, capturing how executive conviction and transactions evolved.">i</span></h4>' +
                 '<p style="margin:0 0 10px; color:#738091; font-size:11px;">' + first + ' to ' + last +
                 ' · captured when each daily scan ran</p>' +
                 '<div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px;">' + cards +
                 '</div></section>';
         }
 
-        function renderInsiderMetricCard(snapshots, key, label, format, color) {
+        function renderInsiderMetricCard(snapshots, key, label, format, color, tooltip) {
             const values = snapshots.map(s => s[key]).filter(v => v !== null && v !== undefined);
             if (!values.length) return '';
             const min = Math.min(...values);
@@ -3941,8 +3996,12 @@ renderCards();
             }).filter(Boolean).join(' ');
             const latest = values[values.length - 1];
             return '<div style="border:1px solid #2a3040; border-radius:4px; padding:8px; min-width:0;">' +
-                '<div style="display:flex; justify-content:space-between; gap:8px; font-size:11px;">' +
-                '<span style="color:#a0aec0;">' + label + '</span><strong style="color:' + color + ';">' + format(latest) + '</strong></div>' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:11px;">' +
+                '<span style="color:#a0aec0; display:inline-flex; align-items:center; min-width:0;">' +
+                '<span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + label + '</span>' +
+                '<span class="param-info-icon" data-tooltip="' + tooltip + '" aria-label="' + label + ' info">i</span>' +
+                '</span>' +
+                '<strong style="color:' + color + '; flex-shrink:0;">' + format(latest) + '</strong></div>' +
                 '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="52" preserveAspectRatio="none" aria-label="' + label + ' history">' +
                 '<line x1="0" y1="26" x2="' + W + '" y2="26" stroke="#2a3040" stroke-width="1"/>' +
                 '<polyline points="' + points + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
@@ -3978,12 +4037,12 @@ renderCards();
             const hasComp = months.some(m => (m.comp_sells || 0) > 0);
             const legY = 10;
             svg += '<rect x="' + padL + '" y="' + (legY-4) + '" width="8" height="8" fill="#34d399" rx="1"/>';
-            svg += '<text x="' + (padL+11) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Gross buys</text>';
+            svg += '<text x="' + (padL+11) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace" style="cursor:help;" data-tooltip="Gross buys | Open-market share purchases made by executives or directors.">Gross buys</text>';
             svg += '<rect x="' + (padL+96) + '" y="' + (legY-4) + '" width="8" height="8" fill="#e76a6e" rx="1"/>';
-            svg += '<text x="' + (padL+107) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Gross sells</text>';
+            svg += '<text x="' + (padL+107) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace" style="cursor:help;" data-tooltip="Gross sells | Open-market share sales made by executives or directors.">Gross sells</text>';
             if (hasComp) {
                 svg += '<rect x="' + (padL+184) + '" y="' + (legY-4) + '" width="8" height="8" fill="#e76a6e" rx="1" opacity="0.3"/>';
-                svg += '<text x="' + (padL+195) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">Comp (vesting)</text>';
+                svg += '<text x="' + (padL+195) + '" y="' + (legY+4) + '" fill="#738091" font-size="9" font-family="Geist Mono,monospace" style="cursor:help;" data-tooltip="Comp (vesting) | Routine compensation selling, such as automatic sales to cover withholding tax or option exercises.">Comp (vesting)</text>';
             }
 
             // Grid lines
@@ -4077,15 +4136,15 @@ renderCards();
 
             // Legend
             svg += '<rect x="' + padL + '" y="' + (H - 14) + '" width="8" height="8" fill="#34d399" rx="1"/>';
-            svg += '<text x="' + (padL + 11) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace">Gross count</text>';
+            svg += '<text x="' + (padL + 11) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace" style="cursor:help;" data-tooltip="Gross count | Left bar in each month: total number of buy or sell transactions.">Gross count</text>';
             svg += '<rect x="' + (padL + 80) + '" y="' + (H - 14) + '" width="8" height="8" fill="#63e2c6" rx="1" opacity="0.7"/>';
-            svg += '<text x="' + (padL + 101) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace">Gross $ volume</text>';
+            svg += '<text x="' + (padL + 101) + '" y="' + (H - 7) + '" fill="#a0aec0" font-size="9" font-family="Geist Mono,monospace" style="cursor:help;" data-tooltip="Gross $ volume | Right bar in each month: total dollar volume in USD of buys or sells.">Gross $ volume</text>';
             svg += '<text x="' + (padL + Math.max(chartW, totalW) + 4) + '" y="' + (midY + 4) +
                    '" fill="#738091" font-size="9" font-family="Geist Mono,monospace">$0</text>';
 
             // Axis labels
-            svg += '<text x="' + (padL - 4) + '" y="12" fill="#738091" font-size="9" text-anchor="end" font-family="Geist Mono,monospace" opacity="0.6"># txns</text>';
-            svg += '<text x="' + (padL + Math.max(chartW, totalW) + 4) + '" y="12" fill="#738091" font-size="9" font-family="Geist Mono,monospace" opacity="0.6">$ vol</text>';
+            svg += '<text x="' + (padL - 4) + '" y="12" fill="#738091" font-size="9" text-anchor="end" font-family="Geist Mono,monospace" opacity="0.8" style="cursor:help;" data-tooltip="# txns | Transaction count — Number of open-market buy or sell filings in the month."># txns</text>';
+            svg += '<text x="' + (padL + Math.max(chartW, totalW) + 4) + '" y="12" fill="#738091" font-size="9" font-family="Geist Mono,monospace" opacity="0.8" style="cursor:help;" data-tooltip="$ vol | Transaction dollar volume — Total USD traded in open-market buys (green) or sells (red/faded).">$ vol</text>';
 
             svg += '</svg>';
             return svg;
