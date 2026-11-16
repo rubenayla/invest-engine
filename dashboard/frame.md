@@ -29,3 +29,13 @@ this hierarchy and contrast.
 Do not add a dashboard element merely because data exists. State the investor
 question it answers, place it at the corresponding level of the hierarchy, and
 hide operational detail unless it is needed to diagnose the system.
+
+## Mobile and phone interface
+
+On phones, design for one-handed thumb interaction and focused single-panel reading:
+
+1. **Bottom thumb-zone navigation**: The primary navigation and main action buttons (switching between the 5 analysis views and toggling the stock universe drawer) sit at the bottom of the screen, where fingers comfortably reach them without stretching to the top.
+2. **Whole screen or nothing**: On narrow viewports, the stock directory drawer occupies the full screen (or an 88% width drawer over a frosted dark backdrop) rather than an awkward desktop side-by-side split. When closed, it disappears completely.
+3. **Backdrop dismissal**: Tapping the empty/dimmed area to the right of any open drawer or sheet immediately dismisses it.
+4. **No touch-triggered hover tooltips**: Suppress mouse hover tooltips on touch devices (`@media (hover: none)`); taps must select or activate controls directly without spawning stranded desktop cards.
+5. **Three-dot overflow for secondary links**: Secondary external research links (TIKR, Yahoo Finance, Google Finance, TradingView, SEC filings) tuck cleanly into a single `⋮` menu rather than cluttering the header.
